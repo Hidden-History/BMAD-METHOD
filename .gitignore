@@ -110,3 +110,12 @@ prometheus_data/
 # Memory system logs
 memory_*.log
 qdrant_*.log
+
+# Project management artifacts (belong in ../_project/)
+WEEK_*_PROGRESS.md
+*_PROGRESS.md
+*_TEST_PLAN.md
+*_TEST_RESULTS.md
+*_TEST_GUIDE.md
+test-results-*.txt
+test-results-*.md
