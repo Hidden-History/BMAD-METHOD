@@ -672,6 +672,23 @@ class UI {
       console.log(chalk.dim('   Agents will now speak when using AgentVibes'));
     }
 
+    // Memory system information
+    console.log('\n' + chalk.blue.bold('🧠 OPTIONAL: Install Memory System for 85% Token Savings'));
+    console.log(chalk.dim('\nBMAD includes an OPTIONAL memory system that provides persistent, searchable'));
+    console.log(chalk.dim('memory across workflows. Proven to save 85% on token usage while helping you'));
+    console.log(chalk.dim('avoid past mistakes and reuse successful patterns.'));
+    console.log(chalk.dim('\nTo install (takes ~5 minutes):'));
+    console.log(chalk.cyan('\n  bash scripts/memory-setup.sh'));
+    console.log(chalk.dim('\nWhat you get:'));
+    console.log(chalk.dim('  • Project Memory - Code patterns and story outcomes'));
+    console.log(chalk.dim('  • Best Practices - Universal patterns learned across projects'));
+    console.log(chalk.dim('  • Chat Memory - Decisions from agent conversations'));
+    console.log(chalk.dim('  • Automatic context retrieval during workflows'));
+    console.log(chalk.dim('  • Monitoring dashboards (Grafana + Streamlit)'));
+    console.log(chalk.dim('\nFor details, see: docs/memory/README.md'));
+    console.log(chalk.dim('\nMemory is completely OPTIONAL. All BMAD workflows function perfectly without it.'));
+    console.log(chalk.dim('Install only if you want the token savings benefit.'));
+
     console.log(chalk.yellow('\nThank you for helping test the early release version of the new BMad Core and BMad Method!'));
     console.log(chalk.cyan('Stable Beta coming soon - please read the full README.md and linked documentation to get started!'));
 

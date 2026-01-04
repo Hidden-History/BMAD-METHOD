@@ -37,6 +37,30 @@ endMessage: |
 
   ✨ BMAD IS READY TO USE!
 
+  🧠 OPTIONAL: Install Memory System for 85% Token Savings
+
+  BMAD now includes an OPTIONAL memory system that provides persistent, searchable
+  memory across your workflows. This enhancement is proven to save 85% on token usage
+  while helping you avoid past mistakes and reuse successful patterns.
+
+  To install the memory system (takes ~5 minutes):
+
+    bash scripts/memory-setup.sh
+
+  What you get:
+  • Project Memory - Code patterns and story outcomes
+  • Best Practices - Universal patterns learned across projects
+  • Chat Memory - Decisions from agent conversations
+  • Automatic context retrieval during workflows
+  • Monitoring dashboards (Grafana + Streamlit)
+
+  For details, see: docs/memory/README.md
+
+  Memory installation is completely OPTIONAL. All BMAD workflows function
+  perfectly without it. Install only if you want the token savings benefit.
+
+  ════════════════════════════════════════════════════════════════════════════════
+
   ONE FINAL NOTE WITH VERSION Alpha.22: Phase 4 (Implementation) is still in the process of
   being migrated to the improved workflow progressive disclosure system.
   Along with this, the full conversion to the new path locations for content being searched
