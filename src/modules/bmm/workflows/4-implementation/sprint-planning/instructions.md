@@ -48,6 +48,38 @@
     <note>After discovery, these content variables are available: {epics_content} (all epics loaded - uses FULL_LOAD strategy)</note>
   </step>
 
+<step n="1.5" goal="Search memory for sprint organization patterns">
+<critical>Pattern 5: Pre-work Memory Search - Load sprint patterns BEFORE building status structure</critical>
+
+<action>Determine feature keywords from loaded epics:
+- Extract project type from epics (web app, API, mobile, etc.)
+- Count epic and story totals
+- Construct search query: "sprint organization {{project_type}} {{epic_count}} epics"
+</action>
+
+<action>Execute pre-work memory search:
+python3 {project-root}/src/core/workflows/tools/pre-work-search.py sm SPRINT-1 "{{search_query}}"
+</action>
+
+<check if="memory search succeeds and patterns retrieved">
+  <output>📚 **MEMORY CONTEXT LOADED**
+
+  Retrieved sprint organization patterns from previous projects.
+  These patterns will inform status structure and workflow optimization.
+  </output>
+  <action>Use retrieved patterns to guide sprint organization decisions</action>
+</check>
+
+<check if="no patterns found OR memory search fails">
+  <output>ℹ️ **No Previous Sprint Patterns Found**
+
+  First sprint planning or no similar projects found - starting fresh.
+  </output>
+</check>
+
+<critical>Memory search is NON-BLOCKING: If it fails, workflow continues normally. Patterns enhance sprint quality but are not required.</critical>
+</step>
+
 <step n="2" goal="Build sprint status structure">
 <action>For each epic found, create entries in this order:</action>
 
@@ -177,6 +209,79 @@ development_status:
 3. Agents will update statuses as they work
 4. Re-run this workflow to refresh auto-detected statuses
 
+</step>
+
+<step n="5.5" goal="Store sprint organization patterns in memory">
+<critical>Pattern 5: Post-work Memory Storage - Store sprint patterns for future SM/Dev retrieval</critical>
+
+After sprint-status.yaml generation and validation, store key patterns in both bmad-knowledge and agent-memory collections:
+
+**A. Store Sprint Organization Pattern (bmad-knowledge)**
+
+<action>Extract sprint organization summary:
+- Total epic count: {{epic_count}}
+- Total story count: {{story_count}}
+- Stories per epic breakdown
+- Status detection results (ready-for-dev, in-progress, done counts)
+- File:line references to sprint-status.yaml
+</action>
+
+<action>Execute bmad-knowledge storage:
+python3 {project-root}/src/core/workflows/tools/post-work-store.py sm SPRINT-1 0 sprint-planning \
+  --what-built "Sprint organization for {{project_name}} in {status_file}:1-{{total_line_count}}. Organized {{epic_count}} epics with {{story_count}} total stories. Epic breakdown: {{epic_summary}}" \
+  --integration "Used by Dev agent for story sequence, SM for progress tracking" \
+  --errors "None" \
+  --testing "Sprint plan validated: all epics/stories tracked, status flow verified in step 5"
+</action>
+
+<check if="storage succeeds">
+  <output>💾 **SPRINT ORGANIZATION PATTERNS STORED IN MEMORY**
+
+  Stored sprint planning pattern in bmad-knowledge collection:
+  - ✅ {{epic_count}} epics indexed
+  - ✅ {{story_count}} stories catalogued
+  - ✅ Status tracking structure saved
+  - ✅ File:line references to sprint-status.yaml included
+
+  **Future workflows will retrieve these patterns:**
+  - Dev agent will access for story implementation sequence
+  - SM agent will retrieve for sprint retrospectives
+  </output>
+</check>
+
+<check if="storage fails">
+  <output>⚠️ **MEMORY STORAGE FAILED**
+
+  Sprint organization could not be stored in memory.
+  Reason: {{error_reason}}
+
+  **This does NOT affect sprint planning completion** - your sprint-status.yaml is complete and ready.
+
+  **Impact:** Future workflows will need to manually read sprint-status.yaml instead of retrieving pre-indexed patterns.
+  </output>
+</check>
+
+**B. Store Chat Memory (agent-memory)**
+
+<action>Summarize key SM decisions from sprint planning:
+- Story organization approach (sequential vs parallel)
+- Epic prioritization order
+- Estimated complexity based on story count
+</action>
+
+<action>Execute chat memory storage:
+python3 {project-root}/src/core/workflows/tools/load-chat-context.py sm "sprint planning" \
+  --decision "Sprint organized for {{project_name}}: {{epic_count}} epics, {{story_count}} stories, Estimated time={{estimated_time}}"
+</action>
+
+<check if="storage succeeds">
+  <output>💾 **SM SPRINT DECISIONS STORED IN CHAT MEMORY**
+
+  Stored sprint planning decisions in agent-memory for future SM context.
+  </output>
+</check>
+
+<critical>Memory storage is NON-BLOCKING: If it fails, workflow completes successfully. Memory enhances future workflows but is not required for sprint planning completion.</critical>
 </step>
 
 </workflow>
