@@ -159,8 +159,9 @@ echo ""
 
 # Install with --user flag for safety (doesn't require sudo)
 # Works across all platforms: Windows, Mac, Linux, WSL
-python3 -m pip install --user --upgrade pip
-python3 -m pip install --user \
+# --break-system-packages is safe for development environments (PEP 668)
+python3 -m pip install --user --break-system-packages --upgrade pip
+python3 -m pip install --user --break-system-packages \
     qdrant-client==1.16.2 \
     sentence-transformers==5.2.0 \
     python-dotenv==1.2.1
