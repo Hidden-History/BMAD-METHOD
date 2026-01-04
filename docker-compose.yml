@@ -142,8 +142,8 @@ services:
     ports:
       - "18505:8501"   # Dashboard UI (changed from 8501 to avoid conflicts)
     volumes:
-      - ./monitoring/streamlit:/app:ro  # Read-only for security
-      - streamlit_cache:/app/.streamlit  # Cache directory
+      - ./monitoring/streamlit:/app:ro  # Read-only for security (code only)
+      - streamlit_cache:/home/streamlit/.streamlit  # Cache outside read-only mount
     environment:
       # Streamlit configuration
       - STREAMLIT_SERVER_PORT=8501
