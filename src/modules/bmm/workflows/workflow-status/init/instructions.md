@@ -343,4 +343,41 @@ Happy building! 🚀</output>
 
 </step>
 
+<step n="9.5" goal="Store workflow classification in memory" tag="memory">
+<critical>Pattern 5: Post-work memory storage - Store classification decision for future agent reference</critical>
+<critical>This is CHAT MEMORY ONLY - agent-memory collection (no bmad-knowledge needed for workflow-init)</critical>
+
+<action>Summarize key classification decisions made during workflow-init:
+- Project type: {{field_type}} (greenfield/brownfield)
+- Planning track: {{selected_track}} (method/enterprise/quick-flow)
+- Project name: {{project_name}}
+- Discovery workflows: {{list_selected_discovery}}
+</action>
+
+<action>Construct decision summary for storage:
+"Classified project '{{project_name}}' as {{field_type}} using {{selected_track}} track{{#if has_discovery}}. Selected discovery workflows: {{list_selected_discovery}}{{/if}}."
+</action>
+
+<action>Execute chat memory storage:
+python3 {project-root}/src/core/workflows/tools/load-chat-context.py analyst "workflow classification" --store \
+  --decision "{{decision_summary}}"
+</action>
+
+<check if="storage succeeds">
+  <output>💾 **WORKFLOW CLASSIFICATION STORED**
+
+  Stored project classification in agent-memory for future PM/Architect/SM reference.
+  This helps maintain context across the entire BMAD workflow.
+  </output>
+</check>
+
+<check if="storage fails">
+  <output>⚠️ **MEMORY STORAGE SKIPPED**
+
+  Chat memory storage failed but workflow completed successfully.
+  This does NOT affect project initialization.
+  </output>
+</check>
+</step>
+
 </workflow>
