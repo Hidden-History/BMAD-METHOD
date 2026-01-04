@@ -184,7 +184,7 @@ WORKFLOW COMPLETE ✅
 **Key Content:**
 
 ```markdown
-## Benefits (Proven in Legal AI)
+## Benefits (Proven in BMAD Memory)
 
 Before Memory Integration:
 - No context from previous implementations
@@ -501,7 +501,7 @@ ae87346a feat(workflows): add workflow bridge scripts for memory integration
    - All patterns use same underlying scripts
    - Consistency across integration methods
 
-### Proven Benefits (from Legal AI)
+### Proven Benefits (from BMAD Memory)
 
 **Before memory integration:**
 - 8,000 tokens of API documentation

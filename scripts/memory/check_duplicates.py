@@ -21,7 +21,7 @@ Usage:
     python check_duplicates.py --content-file content.txt --metadata metadata.json
 
 Created: 2026-01-04
-Based on proven patterns from Legal AI implementation
+Based on proven patterns from BMAD Memory implementation
 """
 
 import os

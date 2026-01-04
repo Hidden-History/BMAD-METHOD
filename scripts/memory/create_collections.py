@@ -230,8 +230,8 @@ def main():
 
         print("\n📋 NEXT STEPS:")
         print("\n1. Copy core Python library (Week 2):")
-        print("   - 7 files from Legal AI memory implementation")
-        print("   - Location: /mnt/e/projects/document processing/legal-ai-agents/src/legal_ai/memory/")
+        print("   - 7 files from BMAD Memory memory implementation")
+        print("   - Location: /mnt/e/projects/document processing/bmad-memory-system-agents/src/legal_ai/memory/")
         print("\n2. Start using memory in workflows:")
         print("   - Chat memory: load-chat-context.py")
         print("   - Project memory: pre-work-search.py, post-work-store.py")

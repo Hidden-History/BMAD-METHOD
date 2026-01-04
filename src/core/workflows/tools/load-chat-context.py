@@ -6,7 +6,7 @@ Pattern 1: Wrapper Script Bridge - Python interface for chat memory
 Pattern 5: Workflow Hook Timing - Pre-work search for chat context
 
 Loads long-term conversation context from agent-memory collection.
-This implements the PROVEN chat memory pattern from Legal AI project.
+This implements the PROVEN chat memory pattern from BMAD Memory System.
 
 Usage:
     # From workflow or agent initialization

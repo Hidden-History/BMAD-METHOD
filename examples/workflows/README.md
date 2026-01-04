@@ -11,7 +11,7 @@ BMAD workflows can integrate memory at two key points:
 - **Step 1.5 (Pre-Work):** Search memory BEFORE starting implementation
 - **Step 6.5 (Post-Work):** Store outcome AFTER completing verification
 
-This implements **Pattern 5** from the proven Legal AI implementation, achieving **85% token savings**.
+This implements **Pattern 5** from the proven BMAD Memory implementation, achieving **85% token savings**.
 
 ---
 
@@ -297,7 +297,7 @@ python src/core/workflows/tools/post-work-store.py \
 
 ---
 
-## Benefits (Proven in Legal AI)
+## Benefits (Proven in BMAD Memory)
 
 ### Before Memory Integration
 
@@ -386,4 +386,4 @@ curl http://localhost:16350/health  # Should return OK
 
 **Ready to integrate memory into your BMAD workflows!**
 
-**Proven patterns from Legal AI project • 85% token savings • 100% data quality**
+**Proven patterns from BMAD Memory System • 85% token savings • 100% data quality**

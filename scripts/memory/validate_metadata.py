@@ -20,7 +20,7 @@ Usage:
     python validate_metadata.py --metadata metadata.json --type architecture_decision
 
 Created: 2026-01-04
-Based on proven patterns from Legal AI implementation
+Based on proven patterns from BMAD Memory implementation
 """
 
 import json

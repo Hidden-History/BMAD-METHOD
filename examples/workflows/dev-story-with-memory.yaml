@@ -4,7 +4,7 @@
 # - Step 1.5: Pre-work search (BEFORE implementation)
 # - Step 6.5: Post-work storage (AFTER verification)
 #
-# Based on proven patterns from Legal AI project
+# Based on proven patterns from BMAD Memory System
 
 name: dev-story-with-memory
 description: Development story workflow with memory hooks (Pattern 5)
@@ -169,5 +169,5 @@ metadata:
   patterns_implemented:
     - Pattern 1: Wrapper Script Bridge
     - Pattern 5: Workflow Hook Timing
-  proven_in: Legal AI project
+  proven_in: BMAD Memory System
   token_savings: 85%

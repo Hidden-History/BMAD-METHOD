@@ -8,7 +8,7 @@
 
 ## 🎯 Week 2 Goal
 
-Copy and upgrade core Python library from Legal AI project with all 10 proven patterns, extending to support all 3 memory types.
+Copy and upgrade core Python library from BMAD Memory System with all 10 proven patterns, extending to support all 3 memory types.
 
 ---
 
@@ -30,9 +30,9 @@ src/core/memory/
 └── agent_hooks.py               # Workflow integration hooks (all 10 patterns)
 ```
 
-**Enhancements from Legal AI:**
+**Enhancements from BMAD Memory:**
 - Added `CollectionType` support: `"knowledge" | "best_practices" | "agent_memory"`
-- Added all 9 memory types (Legal AI had chat only)
+- Added all 9 memory types (BMAD Memory had chat only)
 - Added `agent` and `group_id` to required metadata
 - All functions support `collection_type` parameter for routing
 
@@ -217,7 +217,7 @@ python scripts/memory/test_memory.py --offline # Skip Qdrant connection
 
 ### 1. Complete Python Library
 
-**All 10 proven patterns from Legal AI implemented and extended:**
+**All 10 proven patterns from BMAD Memory implemented and extended:**
 - Pattern 1-2: Dual access for MCP and subprocess agents
 - Pattern 3: Token budgets enforced per-agent and per-shard
 - Pattern 4: File:line references REQUIRED for actionable types
@@ -313,7 +313,7 @@ While Week 2 is 100% complete for the planned scope, these enhancements could be
 1. **Workflow Integration**
    - Create wrapper scripts (pre-work-search.py, post-work-store.py, load-chat-context.py)
    - Modify dev-story workflow with Step 1.5 (pre-work) and Step 6.5 (post-work)
-   - Test chat memory (already proven in Legal AI)
+   - Test chat memory (already proven in BMAD Memory)
    - Test project memory (new)
    - Test best practices memory (new)
 
@@ -388,4 +388,4 @@ git log --oneline feature/qdrant-memory-foundation
 
 ---
 
-**🎉 Week 2 successfully completed with all 10 proven patterns from Legal AI implemented and validated!**
+**🎉 Week 2 successfully completed with all 10 proven patterns from BMAD Memory implemented and validated!**

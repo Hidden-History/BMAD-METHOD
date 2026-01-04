@@ -2,7 +2,7 @@
 """
 Pre-Storage Validator for BMAD Memory System
 
-Implements all 10 proven patterns from Legal AI implementation:
+Implements all 10 proven patterns from BMAD Memory implementation:
 1. Wrapper Script Bridge - Python interface for validation
 2. Dual Access - Works with both MCP and Python API
 3. Token Budget Enforcement - Validates token limits

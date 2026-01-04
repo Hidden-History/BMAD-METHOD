@@ -2,13 +2,13 @@
 
 **Enforcement Rules for BMAD Agents Using Memory System**
 
-Based on proven patterns from Legal AI project (85% token savings, 100% data quality)
+Based on proven patterns from BMAD Memory System (85% token savings, 100% data quality)
 
 ---
 
 ## 🎯 Purpose
 
-This document defines **strict, enforceable rules** implementing all 10 proven patterns from Legal AI:
+This document defines **strict, enforceable rules** implementing all 10 proven patterns from BMAD Memory:
 
 1. **Wrapper Script Bridge** - Python scripts bridge declarative workflows
 2. **Dual Access** - MCP tools + Python API for subprocess agents
@@ -113,7 +113,7 @@ Subprocess Agents:    Python API (required)
 
 ## 📋 PATTERN 3: Token Budget Enforcement
 
-### Agent Token Budgets (from Legal AI production data)
+### Agent Token Budgets (from BMAD Memory production data)
 
 | Agent | Max Tokens | Rationale |
 |-------|-----------|-----------|
@@ -265,7 +265,7 @@ shard_ids = hooks.after_story_complete(story_id="2-17", ...)
 
 ## 📋 PATTERN 6: Score Threshold 0.5
 
-### Search Quality Thresholds (from Legal AI production validation)
+### Search Quality Thresholds (from BMAD Memory production validation)
 
 | Score Range | Quality | Action |
 |-------------|---------|--------|
@@ -432,7 +432,7 @@ def check_for_duplicates(content: str, unique_id: str) -> tuple[bool, dict]:
 
 ### Similarity Threshold: 0.85
 
-**From Legal AI validation:** 0.85 is the optimal threshold
+**From BMAD Memory validation:** 0.85 is the optimal threshold
 - <0.85: Different enough to store separately
 - ≥0.85: Too similar, likely duplicate
 
@@ -502,7 +502,7 @@ def before_story_start(self, story_id: str, feature: str) -> str:
 
 ## 📋 PATTERN 10: Code Snippets (3-10 Lines Optimal)
 
-### Benefits (from Legal AI data)
+### Benefits (from BMAD Memory data)
 
 **Token trade-off:**
 - File:line reference only: ~20 tokens
@@ -908,6 +908,6 @@ python scripts/memory/validate_metadata.py \
 
 ---
 
-**This completes the BMAD Memory Integration Rules with all 10 proven patterns from Legal AI.**
+**This completes the BMAD Memory Integration Rules with all 10 proven patterns from BMAD Memory.**
 
 **Compliance = 85% token savings + 100% data quality (proven in production)**
