@@ -169,8 +169,12 @@ source .venv/bin/activate
 
 print_header "📦 INSTALLING PYTHON DEPENDENCIES"
 
-echo "Installing: qdrant-client, sentence-transformers, python-dotenv"
-pip install -q qdrant-client sentence-transformers python-dotenv
+echo "Installing: qdrant-client, sentence-transformers, python-dotenv (latest versions)"
+# Install latest stable versions (2026-01-04)
+pip install -q \
+    qdrant-client==1.16.2 \
+    sentence-transformers==5.2.0 \
+    python-dotenv==1.2.1
 
 print_success "Python dependencies installed in virtual environment"
 

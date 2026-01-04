@@ -20,6 +20,7 @@ services:
   # ---------------------------------------------------------------------------
   # QDRANT - Vector Database
   # ---------------------------------------------------------------------------
+  # Using latest tag (currently v1.16.3 as of 2026-01-04)
   qdrant:
     image: qdrant/qdrant:latest
     container_name: bmad-qdrant

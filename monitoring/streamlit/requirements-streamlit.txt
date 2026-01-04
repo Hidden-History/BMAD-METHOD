@@ -1,25 +1,28 @@
 # =============================================================================
 # Streamlit Dashboard - Python Dependencies
 # =============================================================================
-# Minimal dependencies for Streamlit dashboard
+# Updated: 2026-01-04 - Latest stable versions
 # =============================================================================
 
-# Streamlit
-streamlit==1.40.2
+# Streamlit (supports Python 3.14, Vega-Altair 6)
+streamlit==1.52.2
 
-# Qdrant client
-qdrant-client==1.12.1
+# Qdrant client (matches Qdrant v1.16.3 server)
+qdrant-client==1.16.2
+
+# Sentence transformers for embeddings
+sentence-transformers==5.2.0
 
 # Data visualization
-plotly==5.24.1
-pandas==2.2.3
-numpy==2.2.0
+plotly==6.5.0
+pandas==2.3.3
+numpy==2.4.0
 
 # Environment variables
-python-dotenv==1.0.1
+python-dotenv==1.2.1
 
-# Metrics export (optional)
-prometheus-client==0.21.0
+# Metrics export (official Prometheus client)
+prometheus-client==0.23.1
 
 # Date/time utilities
 python-dateutil==2.9.0.post0
@@ -28,4 +31,4 @@ python-dateutil==2.9.0.post0
 rich==13.9.4
 
 # HTTP requests
-requests==2.32.3
+requests==2.32.5
