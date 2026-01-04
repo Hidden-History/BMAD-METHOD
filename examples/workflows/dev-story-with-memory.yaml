@@ -1,0 +1,173 @@
+# BMAD Dev Story Workflow - WITH MEMORY INTEGRATION
+#
+# This workflow demonstrates Pattern 5: Workflow Hook Timing
+# - Step 1.5: Pre-work search (BEFORE implementation)
+# - Step 6.5: Post-work storage (AFTER verification)
+#
+# Based on proven patterns from Legal AI project
+
+name: dev-story-with-memory
+description: Development story workflow with memory hooks (Pattern 5)
+agent: dev
+
+# Workflow variables (populated by workflow engine)
+variables:
+  story_id: string       # e.g., "2-17"
+  epic_id: string        # e.g., "2"
+  feature: string        # e.g., "JWT authentication"
+  component: string      # e.g., "auth"
+
+steps:
+  # ========================================
+  # STANDARD WORKFLOW STEPS
+  # ========================================
+
+  - id: 1
+    name: Load Story
+    action: load_story
+    params:
+      story_id: ${story_id}
+    output: story_details
+
+  # ========================================
+  # STEP 1.5: PRE-WORK MEMORY SEARCH
+  # Pattern 5: Load context BEFORE implementation
+  # ========================================
+
+  - id: 1.5
+    name: 🔍 Search Memory (Pre-Work)
+    action: execute_script
+    script: src/core/workflows/tools/pre-work-search.py
+    args:
+      - ${agent}              # Agent name (dev)
+      - ${story_id}           # Story ID (2-17)
+      - ${feature}            # Feature description
+    output: memory_context
+    timing: synchronous       # MUST complete before proceeding
+    on_error: continue        # Continue if no memories found (first time)
+
+  # ========================================
+  # IMPLEMENTATION STEPS
+  # ========================================
+
+  - id: 2
+    name: Analyze Requirements
+    action: analyze
+    params:
+      story: ${story_details}
+      context: ${memory_context}  # Use memory context in analysis
+    output: requirements
+
+  - id: 3
+    name: Design Solution
+    action: design
+    params:
+      requirements: ${requirements}
+      context: ${memory_context}  # Use memory context in design
+    output: design_spec
+
+  - id: 4
+    name: Implement
+    action: implement
+    params:
+      design: ${design_spec}
+      context: ${memory_context}  # Use memory context during coding
+    output: implementation
+
+  - id: 5
+    name: Write Tests
+    action: write_tests
+    params:
+      implementation: ${implementation}
+    output: tests
+
+  - id: 6
+    name: Run Tests
+    action: run_tests
+    params:
+      tests: ${tests}
+    output: test_results
+    validation:
+      all_pass: true  # All tests must pass
+
+  # ========================================
+  # STEP 6.5: POST-WORK MEMORY STORAGE
+  # Pattern 5: Store outcome AFTER verification
+  # ========================================
+
+  - id: 6.5
+    name: 💾 Store Outcome (Post-Work)
+    action: execute_script
+    script: src/core/workflows/tools/post-work-store.py
+    args:
+      - ${agent}              # Agent name (dev)
+      - ${story_id}           # Story ID (2-17)
+      - ${epic_id}            # Epic ID (2)
+      - ${component}          # Component (auth)
+      - --what-built
+      - ${implementation.summary}  # MUST include file:line refs
+      - --integration
+      - ${implementation.integration_points}
+      - --errors
+      - ${implementation.common_errors}
+      - --testing
+      - ${tests.summary}      # MUST include file:line refs
+    output: shard_ids
+    timing: asynchronous      # Don't block workflow
+    on_error: warn            # Warn but don't fail story
+
+  # ========================================
+  # COMPLETION
+  # ========================================
+
+  - id: 7
+    name: Mark Story Complete
+    action: complete_story
+    params:
+      story_id: ${story_id}
+      results: ${test_results}
+      memories_stored: ${shard_ids}
+
+# ========================================
+# WORKFLOW HOOKS (for runtime injection)
+# ========================================
+
+hooks:
+  pre_work:
+    step: 1.5
+    description: Load relevant memories before starting work
+    pattern: Pattern 5 - Pre-work search
+
+  post_work:
+    step: 6.5
+    description: Store implementation knowledge after verification
+    pattern: Pattern 5 - Post-work storage
+
+# ========================================
+# VALIDATION RULES
+# ========================================
+
+validation:
+  # Pattern 4: File:line references required
+  required_file_refs:
+    - implementation.summary
+    - tests.summary
+
+  # Pattern 3: Token budget enforcement
+  max_context_tokens: 1000  # For dev agent
+
+  # Pattern 6: Minimum similarity score
+  min_memory_score: 0.5
+
+# ========================================
+# METADATA
+# ========================================
+
+metadata:
+  created: 2026-01-04
+  version: 1.0
+  patterns_implemented:
+    - Pattern 1: Wrapper Script Bridge
+    - Pattern 5: Workflow Hook Timing
+  proven_in: Legal AI project
+  token_savings: 85%
