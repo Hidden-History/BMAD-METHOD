@@ -1,0 +1,168 @@
+# =============================================================================
+# Prometheus Configuration for BMAD Memory Integration
+# =============================================================================
+# 2025 Best Practices:
+# - Appropriate scrape intervals (15-30s for most workloads)
+# - Metric relabeling for cardinality control
+# - Service discovery
+# - TLS support
+# =============================================================================
+
+global:
+  # Scrape interval: 30s (2025 best practice for most workloads)
+  scrape_interval: 30s
+
+  # Evaluation interval for recording rules and alerts
+  evaluation_interval: 30s
+
+  # Global labels attached to all time series
+  external_labels:
+    cluster: 'bmad-memory'
+    environment: 'development'  # Change to 'production' when deployed
+
+# Alertmanager configuration (optional - uncomment when ready)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['localhost:9093']
+
+# Rule files for alerts (optional)
+# rule_files:
+#   - '/etc/prometheus/alerts/*.yml'
+
+# =============================================================================
+# SCRAPE CONFIGURATIONS
+# =============================================================================
+
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # Prometheus Self-Monitoring
+  # ---------------------------------------------------------------------------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # ---------------------------------------------------------------------------
+  # Qdrant Vector Database Metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'qdrant'
+    static_configs:
+      - targets: ['qdrant:6333']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+    # 2025 Best Practice: Metric relabeling for cardinality control
+    metric_relabel_configs:
+      # Drop high-cardinality metrics if needed
+      # - source_labels: [__name__]
+      #   regex: 'qdrant_collection_.*_high_cardinality_metric'
+      #   action: drop
+
+      # Normalize labels to reduce cardinality
+      - source_labels: [collection]
+        target_label: collection_normalized
+        regex: '(.+)'
+        replacement: '$1'
+
+    # 2025 Best Practice: TLS configuration (uncomment for production)
+    # tls_config:
+    #   ca_file: /etc/prometheus/ca.crt
+    #   cert_file: /etc/prometheus/client.crt
+    #   key_file: /etc/prometheus/client.key
+    #   insecure_skip_verify: false
+
+  # ---------------------------------------------------------------------------
+  # Grafana Metrics
+  # ---------------------------------------------------------------------------
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 60s  # Less critical, scrape less frequently
+
+  # ---------------------------------------------------------------------------
+  # Streamlit Dashboard Metrics (if exposing Prometheus metrics)
+  # ---------------------------------------------------------------------------
+  - job_name: 'streamlit'
+    static_configs:
+      - targets: ['streamlit:8501']
+    metrics_path: '/metrics'  # If Streamlit exposes metrics
+    scrape_interval: 60s
+
+    # Streamlit may not expose metrics by default
+    # This is optional and depends on implementation
+
+  # ---------------------------------------------------------------------------
+  # BMAD Memory Python Application Metrics (future)
+  # ---------------------------------------------------------------------------
+  # - job_name: 'bmad-memory-app'
+  #   static_configs:
+  #     - targets: ['bmad-app:8000']
+  #   metrics_path: '/metrics'
+  #   scrape_interval: 30s
+
+# =============================================================================
+# RECORDING RULES (Optional - for performance optimization)
+# =============================================================================
+# Precompute frequently-used queries to reduce query load
+# groups:
+#   - name: qdrant_aggregations
+#     interval: 60s
+#     rules:
+#       - record: qdrant:collection:total_points
+#         expr: sum(qdrant_collection_points_count) by (collection)
+#
+#       - record: qdrant:search:avg_duration_seconds
+#         expr: rate(qdrant_search_duration_seconds_sum[5m]) / rate(qdrant_search_duration_seconds_count[5m])
+
+# =============================================================================
+# REMOTE WRITE (Optional - for long-term storage)
+# =============================================================================
+# 2025 Best Practice: Offload long-term storage to reduce local storage
+# remote_write:
+#   - url: 'https://remote-prometheus-endpoint/api/v1/write'
+#     queue_config:
+#       capacity: 10000
+#       max_shards: 5
+#       min_shards: 1
+#       max_samples_per_send: 1000
+#       batch_send_deadline: 5s
+#     # TLS and authentication
+#     tls_config:
+#       insecure_skip_verify: false
+#     basic_auth:
+#       username: 'prometheus'
+#       password_file: '/etc/prometheus/remote_write_password'
+
+# =============================================================================
+# NOTES
+# =============================================================================
+#
+# Key Metrics to Monitor:
+#
+# Qdrant:
+#   - qdrant_collection_points_count: Number of vectors per collection
+#   - qdrant_search_duration_seconds: Search latency
+#   - qdrant_collections_count: Total collections
+#   - qdrant_memory_bytes: Memory usage
+#
+# Prometheus:
+#   - prometheus_target_scrapes_total: Successful scrapes
+#   - prometheus_target_scrape_duration_seconds: Scrape latency
+#   - prometheus_tsdb_storage_blocks_bytes: Storage usage
+#
+# Grafana:
+#   - grafana_api_dashboard_get_duration_seconds: Dashboard load time
+#   - grafana_alerting_active_alerts: Active alerts
+#
+# 2025 Best Practices Applied:
+# - 30s scrape interval for balance (not too aggressive, not too slow)
+# - Metric relabeling for cardinality control
+# - TLS configuration ready (commented out for development)
+# - Recording rules for performance optimization
+# - Remote write for long-term storage
+# - Separate scrape intervals based on criticality
+# =============================================================================

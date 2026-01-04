@@ -1,0 +1,232 @@
+# =============================================================================
+# BMAD-METHOD Qdrant Memory Integration - Docker Compose Configuration
+# =============================================================================
+# 2025 Best Practices:
+# - No version field (deprecated in Compose v2+)
+# - Named networks for isolation
+# - Healthchecks for all services
+# - Resource limits
+# - Restart policies
+# - Proper dependency management
+#
+# Usage:
+#   docker compose up -d              # Start all services
+#   docker compose ps                 # Check status
+#   docker compose logs -f qdrant     # View logs
+#   docker compose down               # Stop all services
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # QDRANT - Vector Database
+  # ---------------------------------------------------------------------------
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: bmad-qdrant
+    ports:
+      - "6333:6333"   # REST API
+      - "6334:6334"   # gRPC API
+    volumes:
+      - qdrant_storage:/qdrant/storage
+      - ./qdrant_config:/qdrant/config:ro  # Optional: custom configuration
+    environment:
+      # Logging level (INFO for production, DEBUG for development)
+      - QDRANT__LOG_LEVEL=${QDRANT_LOG_LEVEL:-INFO}
+      # Service configuration
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+      # Performance tuning (2025 best practices)
+      - QDRANT__STORAGE__PERFORMANCE__MAX_SEARCH_THREADS=${QDRANT_MAX_SEARCH_THREADS:-0}
+      # Security: Enable TLS for production (commented out for local dev)
+      # - QDRANT__SERVICE__ENABLE_TLS=true
+    networks:
+      - bmad-memory
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:6333/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # ---------------------------------------------------------------------------
+  # PROMETHEUS - Metrics Collection
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: bmad-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerts:/etc/prometheus/alerts:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'  # 30 days retention
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'  # Allow hot reload via API
+    networks:
+      - bmad-memory
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
+  # ---------------------------------------------------------------------------
+  # GRAFANA - Monitoring Dashboards
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: bmad-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    environment:
+      # Security (change in production!)
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      # Server configuration
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
+      # Anonymous access (disable in production)
+      - GF_AUTH_ANONYMOUS_ENABLED=${GRAFANA_ANONYMOUS:-false}
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      # Provisioning
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      # Performance
+      - GF_DATABASE_WAL=true  # Write-Ahead Logging for better performance
+      # Unified Alerting (2025 feature)
+      - GF_UNIFIED_ALERTING_ENABLED=true
+    networks:
+      - bmad-memory
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # ---------------------------------------------------------------------------
+  # STREAMLIT - Memory Intelligence Dashboard
+  # ---------------------------------------------------------------------------
+  streamlit:
+    build:
+      context: ./monitoring/streamlit
+      dockerfile: Dockerfile
+    container_name: bmad-streamlit
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./monitoring/streamlit:/app:ro  # Read-only for security
+      - streamlit_cache:/app/.streamlit  # Cache directory
+    environment:
+      # Streamlit configuration
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+      # Qdrant connection
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
+      # Collection names
+      - QDRANT_KNOWLEDGE_COLLECTION=${QDRANT_KNOWLEDGE_COLLECTION:-bmad-knowledge}
+      - QDRANT_BEST_PRACTICES_COLLECTION=${QDRANT_BEST_PRACTICES_COLLECTION:-bmad-best-practices}
+      # Performance optimization (2025 best practices)
+      - STREAMLIT_SERVER_MAX_UPLOAD_SIZE=200
+      - STREAMLIT_SERVER_ENABLE_CORS=false
+      - STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=true
+    networks:
+      - bmad-memory
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  bmad-memory:
+    driver: bridge
+    name: bmad-memory-network
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  # Qdrant persistent storage
+  qdrant_storage:
+    driver: local
+    name: bmad-qdrant-storage
+
+  # Prometheus metrics data
+  prometheus_data:
+    driver: local
+    name: bmad-prometheus-data
+
+  # Grafana dashboards and settings
+  grafana_data:
+    driver: local
+    name: bmad-grafana-data
+
+  # Streamlit cache
+  streamlit_cache:
+    driver: local
+    name: bmad-streamlit-cache

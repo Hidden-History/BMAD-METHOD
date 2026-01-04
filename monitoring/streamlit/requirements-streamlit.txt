@@ -1,0 +1,31 @@
+# =============================================================================
+# Streamlit Dashboard - Python Dependencies
+# =============================================================================
+# Minimal dependencies for Streamlit dashboard
+# =============================================================================
+
+# Streamlit
+streamlit==1.40.2
+
+# Qdrant client
+qdrant-client==1.12.1
+
+# Data visualization
+plotly==5.24.1
+pandas==2.2.3
+numpy==2.2.0
+
+# Environment variables
+python-dotenv==1.0.1
+
+# Metrics export (optional)
+prometheus-client==0.21.0
+
+# Date/time utilities
+python-dateutil==2.9.0.post0
+
+# Rich console output
+rich==13.9.4
+
+# HTTP requests
+requests==2.32.3

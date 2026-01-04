@@ -1,0 +1,81 @@
+# =============================================================================
+# Grafana Datasource Configuration - Prometheus
+# =============================================================================
+# Automatically provisions Prometheus as a datasource on Grafana startup
+# 2025 Best Practice: Infrastructure as Code for monitoring
+# =============================================================================
+
+apiVersion: 1
+
+# List of datasources to insert/update
+datasources:
+  # Prometheus datasource
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    version: 1
+
+    # JSON data for Prometheus-specific settings
+    jsonData:
+      # Query timeout (2025 best practice: reasonable timeout)
+      timeInterval: 30s
+      queryTimeout: 60s
+
+      # HTTP method for queries (POST is recommended for large queries)
+      httpMethod: POST
+
+      # Custom query parameters
+      customQueryParameters: ''
+
+      # Enable Prometheus Exemplars (2025 feature)
+      exemplarTraceIdDestinations: []
+
+      # Prometheus version (optional)
+      prometheusType: Prometheus
+      prometheusVersion: latest
+
+      # Cache settings
+      cacheLevel: High
+
+      # Incremental querying (2025 feature)
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: 10m
+
+      # Disable metrics lookup for performance
+      disableMetricsLookup: false
+
+      # Custom headers (if needed for authentication)
+      httpHeaderName1: ''
+
+    # Secure JSON data (for sensitive information)
+    # secureJsonData:
+    #   httpHeaderValue1: 'Bearer <token>'
+
+    # Read-only mode (set to true in production to prevent accidental changes)
+    readOnly: false
+
+    # UID for this datasource (used in dashboard JSON)
+    uid: prometheus-bmad
+
+# =============================================================================
+# NOTES
+# =============================================================================
+#
+# This configuration:
+# 1. Auto-provisions Prometheus datasource on Grafana startup
+# 2. Sets Prometheus as the default datasource
+# 3. Enables modern features (exemplars, incremental querying)
+# 4. Optimizes performance with appropriate timeouts and caching
+#
+# To verify:
+#   curl http://localhost:3000/api/datasources
+#
+# To test query:
+#   curl http://localhost:3000/api/datasources/proxy/prometheus-bmad/api/v1/query?query=up
+#
+# Dashboard provisioning:
+#   Place dashboard JSON files in /etc/grafana/provisioning/dashboards/
+# =============================================================================

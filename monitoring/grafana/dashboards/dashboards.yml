@@ -1,0 +1,49 @@
+# =============================================================================
+# Grafana Dashboard Provisioning Configuration
+# =============================================================================
+# Automatically loads dashboard JSON files from the specified path
+# 2025 Best Practice: Version-controlled dashboards
+# =============================================================================
+
+apiVersion: 1
+
+providers:
+  # BMAD Memory Monitoring Dashboards
+  - name: 'BMAD Memory Dashboards'
+    orgId: 1
+    folder: 'BMAD Memory'
+    folderUid: 'bmad-memory'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false
+
+# =============================================================================
+# NOTES
+# =============================================================================
+#
+# Dashboard JSON files should be placed in the same directory as this file.
+#
+# To create a dashboard:
+# 1. Create dashboard in Grafana UI
+# 2. Export as JSON
+# 3. Save to /etc/grafana/provisioning/dashboards/
+# 4. Grafana will auto-load on next scan (30s)
+#
+# Dashboard naming convention:
+#   - bmad-qdrant-overview.json
+#   - bmad-memory-quality.json
+#   - bmad-agent-performance.json
+#
+# Recommended dashboards (create these):
+# 1. Qdrant Infrastructure (Template ID: Not available, custom)
+# 2. Memory Quality Metrics (custom)
+# 3. Agent Performance (custom)
+# 4. Token Budget Tracking (custom)
+#
+# For now, we'll create a basic dashboard placeholder.
+# Full dashboards will be created in Week 1 Grafana setup task.
+# =============================================================================

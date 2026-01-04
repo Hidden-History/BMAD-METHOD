@@ -1,0 +1,184 @@
+# =============================================================================
+# BMAD-METHOD Qdrant Memory Integration - Python Dependencies
+# =============================================================================
+# Install with: pip install -r requirements.txt
+#
+# 2025 Best Practice: Pinned versions for reproducibility
+# Update periodically with: pip list --outdated
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# CORE DEPENDENCIES
+# -----------------------------------------------------------------------------
+
+# Qdrant vector database client
+qdrant-client==1.12.1
+
+# Environment variable management
+python-dotenv==1.0.1
+
+# JSON schema validation (Problem 7: Metadata validation)
+jsonschema==4.23.0
+
+# -----------------------------------------------------------------------------
+# EMBEDDING & NLP
+# -----------------------------------------------------------------------------
+
+# Sentence transformers for vector embeddings
+sentence-transformers==3.3.1
+
+# PyTorch (required by sentence-transformers)
+# CPU-only version for smaller deployment
+torch==2.5.1
+torchvision==0.20.1
+
+# HuggingFace transformers
+transformers==4.46.3
+
+# -----------------------------------------------------------------------------
+# STREAMLIT DASHBOARD
+# -----------------------------------------------------------------------------
+
+# Streamlit for interactive dashboards
+streamlit==1.40.2
+
+# Plotly for interactive visualizations
+plotly==5.24.1
+
+# Pandas for data manipulation
+pandas==2.2.3
+
+# NumPy for numerical operations
+numpy==2.2.0
+
+# -----------------------------------------------------------------------------
+# MONITORING & METRICS
+# -----------------------------------------------------------------------------
+
+# Prometheus client for metrics export
+prometheus-client==0.21.0
+
+# Python client for Grafana API
+grafana-client==4.0.0
+
+# -----------------------------------------------------------------------------
+# HTTP & API
+# -----------------------------------------------------------------------------
+
+# HTTP library for API calls
+requests==2.32.3
+
+# HTTP client with retry logic
+urllib3==2.2.3
+
+# -----------------------------------------------------------------------------
+# UTILITIES
+# -----------------------------------------------------------------------------
+
+# YAML configuration parsing
+PyYAML==6.0.2
+
+# Date/time utilities
+python-dateutil==2.9.0.post0
+
+# Timezone handling
+pytz==2024.2
+
+# Rich console output (for CLI tools)
+rich==13.9.4
+
+# Click for CLI commands
+click==8.1.7
+
+# -----------------------------------------------------------------------------
+# DATA VALIDATION
+# -----------------------------------------------------------------------------
+
+# Pydantic for data validation
+pydantic==2.10.2
+
+# Data classes with validation
+pydantic-settings==2.6.1
+
+# -----------------------------------------------------------------------------
+# HASHING & SECURITY
+# -----------------------------------------------------------------------------
+
+# Cryptography library
+cryptography==44.0.0
+
+# Hash computation for duplicate detection (Problem 8)
+xxhash==3.5.0
+
+# -----------------------------------------------------------------------------
+# DEVELOPMENT TOOLS (Optional - comment out in production)
+# -----------------------------------------------------------------------------
+
+# Type checking
+mypy==1.13.0
+
+# Code formatting
+black==24.10.0
+
+# Linting
+ruff==0.8.2
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+
+# -----------------------------------------------------------------------------
+# PERFORMANCE & CACHING
+# -----------------------------------------------------------------------------
+
+# Redis client for caching (optional)
+redis==5.2.1
+
+# Memory profiling
+memory-profiler==0.61.0
+
+# -----------------------------------------------------------------------------
+# LOGGING
+# -----------------------------------------------------------------------------
+
+# Structured logging
+python-json-logger==3.2.1
+
+# Log rotation
+loguru==0.7.3
+
+# -----------------------------------------------------------------------------
+# OPTIONAL: OPENAI EMBEDDINGS
+# -----------------------------------------------------------------------------
+# Uncomment if using OpenAI embeddings instead of sentence-transformers
+
+# openai==1.56.1
+# tiktoken==0.8.0
+
+# -----------------------------------------------------------------------------
+# NOTES
+# -----------------------------------------------------------------------------
+#
+# Version Pinning Strategy (2025 Best Practice):
+# - All versions explicitly pinned for reproducibility
+# - Security patches: Update patch versions monthly
+# - Feature updates: Review quarterly
+# - Breaking changes: Test thoroughly before upgrading
+#
+# Installation:
+#   pip install -r requirements.txt
+#
+# Upgrade all packages:
+#   pip install --upgrade -r requirements.txt
+#
+# Check for updates:
+#   pip list --outdated
+#
+# Generate new requirements:
+#   pip freeze > requirements.txt
+#
+# For production, consider using pip-tools:
+#   pip-compile requirements.in
+#   pip-sync requirements.txt
+# =============================================================================
