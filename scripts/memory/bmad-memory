@@ -1,0 +1,403 @@
+#!/usr/bin/env python3
+"""
+BMAD Memory CLI Tool
+
+Command-line interface for quick memory system operations.
+
+Commands:
+    status      - Show memory system health status
+    recent      - Show recent memories
+    search      - Search memories by query
+    tokens      - Show token usage statistics
+    health      - Run comprehensive health check
+    collections - List all collections
+
+Usage:
+    bmad-memory status
+    bmad-memory recent --limit 10
+    bmad-memory search "JWT authentication"
+    bmad-memory tokens --agent dev
+    bmad-memory health
+    bmad-memory collections
+
+Created: 2026-01-04
+Week 4: CLI Tools
+"""
+
+import argparse
+import os
+import sys
+from pathlib import Path
+from typing import Optional
+
+# Add src/core to path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src" / "core"))
+
+try:
+    from dotenv import load_dotenv
+    from qdrant_client import QdrantClient
+    from sentence_transformers import SentenceTransformer
+except ImportError as e:
+    print(f"❌ Missing dependencies: {e}")
+    print("Install with: pip install qdrant-client sentence-transformers python-dotenv")
+    sys.exit(1)
+
+# Load environment
+env_path = Path(__file__).parent.parent.parent / '.env'
+if env_path.exists():
+    load_dotenv(env_path)
+
+# ========================================
+# CONFIGURATION
+# ========================================
+
+QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:16350")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")
+PROJECT_ID = os.getenv("PROJECT_ID", "bmad-qdrant-integration")
+
+COLLECTIONS = {
+    "knowledge": os.getenv("QDRANT_KNOWLEDGE_COLLECTION", "bmad-knowledge"),
+    "best_practices": os.getenv("QDRANT_BEST_PRACTICES_COLLECTION", "bmad-best-practices"),
+    "agent_memory": os.getenv("QDRANT_AGENT_MEMORY_COLLECTION", "agent-memory"),
+}
+
+# ========================================
+# CLIENT
+# ========================================
+
+def get_client() -> QdrantClient:
+    """Get Qdrant client."""
+    if QDRANT_API_KEY and QDRANT_API_KEY.strip():
+        return QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+    else:
+        return QdrantClient(url=QDRANT_URL)
+
+# ========================================
+# COMMANDS
+# ========================================
+
+def cmd_status(args):
+    """Show memory system status."""
+    print(f"🧠 BMAD Memory System Status")
+    print(f"{'=' * 60}")
+    print(f"Project:  {PROJECT_ID}")
+    print(f"Qdrant:   {QDRANT_URL}")
+    print("")
+
+    try:
+        client = get_client()
+
+        for ctype, cname in COLLECTIONS.items():
+            try:
+                info = client.get_collection(cname)
+                count = info.points_count
+                status = info.status.value if hasattr(info.status, 'value') else str(info.status)
+
+                status_emoji = "✅" if status.lower() == "green" else "⚠️"
+
+                print(f"{status_emoji} {ctype.replace('_', ' ').title():<25} {count:>6} memories  ({status})")
+
+            except Exception as e:
+                print(f"❌ {ctype.replace('_', ' ').title():<25} ERROR: {e}")
+
+        print(f"{'=' * 60}")
+
+    except Exception as e:
+        print(f"❌ Failed to connect: {e}")
+        return 1
+
+    return 0
+
+def cmd_recent(args):
+    """Show recent memories."""
+    collection_name = COLLECTIONS.get(args.collection, COLLECTIONS["knowledge"])
+
+    print(f"📚 Recent Memories from {args.collection}")
+    print(f"{'=' * 60}")
+
+    try:
+        client = get_client()
+
+        response = client.scroll(
+            collection_name=collection_name,
+            limit=args.limit,
+            with_payload=True,
+            with_vectors=False,
+        )
+
+        if not response[0]:
+            print("No memories found")
+            return 0
+
+        for i, point in enumerate(response[0], 1):
+            payload = point.payload if point.payload else {}
+
+            print(f"\n[{i}] {payload.get('type', 'unknown')} by {payload.get('agent', 'unknown')}")
+            print(f"    Component: {payload.get('component', 'unknown')}")
+            print(f"    Created:   {payload.get('created_at', 'unknown')}")
+            print(f"    Preview:   {payload.get('content', '')[:100]}...")
+
+        print(f"\n{'=' * 60}")
+
+    except Exception as e:
+        print(f"❌ Failed: {e}")
+        return 1
+
+    return 0
+
+def cmd_search(args):
+    """Search memories."""
+    collection_name = COLLECTIONS.get(args.collection, COLLECTIONS["knowledge"])
+
+    print(f"🔎 Searching in {args.collection}")
+    print(f"Query: \"{args.query}\"")
+    print(f"{'=' * 60}")
+
+    try:
+        client = get_client()
+
+        # Get embedding
+        model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+        query_vector = model.encode(args.query).tolist()
+
+        # Search
+        results = client.search(
+            collection_name=collection_name,
+            query_vector=query_vector,
+            limit=args.limit,
+            with_payload=True,
+        )
+
+        if not results:
+            print("No results found")
+            return 0
+
+        for i, result in enumerate(results, 1):
+            payload = result.payload if result.payload else {}
+
+            print(f"\n[{i}] Score: {result.score:.3f}")
+            print(f"    Type:      {payload.get('type', 'unknown')}")
+            print(f"    Agent:     {payload.get('agent', 'unknown')}")
+            print(f"    Component: {payload.get('component', 'unknown')}")
+            print(f"    Created:   {payload.get('created_at', 'unknown')}")
+            print(f"    Content:   {payload.get('content', '')[:150]}...")
+
+        print(f"\n{'=' * 60}")
+        print(f"Found {len(results)} results")
+
+    except Exception as e:
+        print(f"❌ Search failed: {e}")
+        return 1
+
+    return 0
+
+def cmd_tokens(args):
+    """Show token usage statistics."""
+    print(f"📊 Token Usage Statistics")
+    print(f"{'=' * 60}")
+
+    # Token budgets (Pattern 3)
+    budgets = {
+        "architect": 1500,
+        "analyst": 1200,
+        "pm": 1200,
+        "dev": 1000,
+        "tea": 1000,
+        "tech-writer": 1000,
+        "ux-designer": 1000,
+        "quick-flow-solo-dev": 1000,
+        "sm": 800,
+    }
+
+    if args.agent:
+        if args.agent not in budgets:
+            print(f"❌ Unknown agent: {args.agent}")
+            print(f"Valid agents: {', '.join(budgets.keys())}")
+            return 1
+
+        budget = budgets[args.agent]
+        print(f"Agent:        {args.agent}")
+        print(f"Token Budget: {budget} tokens")
+        print(f"Per-Shard:    300 tokens (max)")
+        print(f"\n✅ Pattern 3: Token Budget Enforcement")
+
+    else:
+        print("Agent Token Budgets (Pattern 3):")
+        print("")
+        for agent, budget in sorted(budgets.items(), key=lambda x: x[1], reverse=True):
+            print(f"  {agent:<20} {budget:>6} tokens")
+
+        print(f"\nPer-shard limit:     300 tokens (all agents)")
+
+    print(f"{'=' * 60}")
+
+    return 0
+
+def cmd_health(args):
+    """Run comprehensive health check."""
+    print(f"🏥 BMAD Memory System Health Check")
+    print(f"{'=' * 60}")
+
+    try:
+        client = get_client()
+        print(f"✅ Qdrant connection: {QDRANT_URL}")
+        print("")
+
+        all_healthy = True
+
+        for ctype, cname in COLLECTIONS.items():
+            try:
+                info = client.get_collection(cname)
+                count = info.points_count
+                indexed = info.indexed_vectors_count if hasattr(info, 'indexed_vectors_count') else count
+                vectors = info.vectors_count
+                status = info.status.value if hasattr(info.status, 'value') else str(info.status)
+
+                # Calculate health
+                health = 100
+                if count == 0:
+                    health -= 50
+                if indexed < vectors:
+                    health -= 20
+                if status.lower() != "green":
+                    health -= 30
+                health = max(0, health)
+
+                # Status emoji
+                if health >= 80:
+                    emoji = "✅"
+                elif health >= 50:
+                    emoji = "⚠️"
+                else:
+                    emoji = "❌"
+                    all_healthy = False
+
+                print(f"{emoji} {ctype.replace('_', ' ').title()}")
+                print(f"   Memories:  {count}")
+                print(f"   Indexed:   {indexed}/{vectors}")
+                print(f"   Status:    {status}")
+                print(f"   Health:    {health}%")
+                print("")
+
+            except Exception as e:
+                print(f"❌ {ctype.replace('_', ' ').title()}: {e}")
+                print("")
+                all_healthy = False
+
+        print(f"{'=' * 60}")
+
+        if all_healthy:
+            print("✅ All systems healthy")
+            return 0
+        else:
+            print("⚠️  Some systems need attention")
+            return 1
+
+    except Exception as e:
+        print(f"❌ Health check failed: {e}")
+        return 1
+
+def cmd_collections(args):
+    """List all collections."""
+    print(f"📊 Memory Collections")
+    print(f"{'=' * 60}")
+
+    try:
+        client = get_client()
+
+        all_collections = client.get_collections().collections
+
+        print(f"Project: {PROJECT_ID}")
+        print("")
+
+        for ctype, cname in COLLECTIONS.items():
+            exists = any(c.name == cname for c in all_collections)
+
+            if exists:
+                info = client.get_collection(cname)
+                count = info.points_count
+                print(f"✅ {ctype.replace('_', ' ').title():<25} ({cname})")
+                print(f"   Memories: {count}")
+            else:
+                print(f"❌ {ctype.replace('_', ' ').title():<25} ({cname})")
+                print(f"   NOT FOUND")
+            print("")
+
+        print(f"{'=' * 60}")
+
+    except Exception as e:
+        print(f"❌ Failed: {e}")
+        return 1
+
+    return 0
+
+# ========================================
+# MAIN
+# ========================================
+
+def main():
+    """Main entry point."""
+    parser = argparse.ArgumentParser(
+        description="BMAD Memory CLI Tool",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  bmad-memory status
+  bmad-memory recent --limit 10 --collection knowledge
+  bmad-memory search "JWT authentication" --limit 5
+  bmad-memory tokens --agent dev
+  bmad-memory health
+  bmad-memory collections
+
+For more information, see: examples/workflows/README.md
+        """
+    )
+
+    subparsers = parser.add_subparsers(dest='command', help='Command to run')
+
+    # Status command
+    subparsers.add_parser('status', help='Show memory system status')
+
+    # Recent command
+    recent_parser = subparsers.add_parser('recent', help='Show recent memories')
+    recent_parser.add_argument('--limit', type=int, default=10, help='Number of memories to show')
+    recent_parser.add_argument('--collection', choices=['knowledge', 'best_practices', 'agent_memory'],
+                              default='knowledge', help='Collection to query')
+
+    # Search command
+    search_parser = subparsers.add_parser('search', help='Search memories')
+    search_parser.add_argument('query', help='Search query')
+    search_parser.add_argument('--limit', type=int, default=5, help='Number of results')
+    search_parser.add_argument('--collection', choices=['knowledge', 'best_practices', 'agent_memory'],
+                              default='knowledge', help='Collection to search')
+
+    # Tokens command
+    tokens_parser = subparsers.add_parser('tokens', help='Show token usage statistics')
+    tokens_parser.add_argument('--agent', help='Show budget for specific agent')
+
+    # Health command
+    subparsers.add_parser('health', help='Run comprehensive health check')
+
+    # Collections command
+    subparsers.add_parser('collections', help='List all collections')
+
+    args = parser.parse_args()
+
+    if not args.command:
+        parser.print_help()
+        return 0
+
+    # Execute command
+    commands = {
+        'status': cmd_status,
+        'recent': cmd_recent,
+        'search': cmd_search,
+        'tokens': cmd_tokens,
+        'health': cmd_health,
+        'collections': cmd_collections,
+    }
+
+    return commands[args.command](args)
+
+if __name__ == "__main__":
+    sys.exit(main())
