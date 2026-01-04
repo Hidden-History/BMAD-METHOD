@@ -171,6 +171,40 @@
       <output>📊 Epic {{epic_num}} status updated to in-progress</output>
     </check>
 
+    <action>GOTO step 1.5</action>
+  </step>
+
+  <step n="1.5" goal="Search memory for story enrichment patterns">
+    <critical>Pattern 5: Pre-work Memory Search - Load story enrichment patterns BEFORE artifact analysis</critical>
+
+    <action>Determine feature keywords from story key and epic context:
+      - Extract feature description from story title (e.g., "user-authentication" → "authentication")
+      - Identify epic domain from epic_num context
+      - Construct search query: "story enrichment {{feature}} {{epic_domain}}"
+    </action>
+
+    <action>Execute pre-work memory search:
+      python3 {project-root}/src/core/workflows/tools/pre-work-search.py sm {{story_key}} "{{search_query}}"
+    </action>
+
+    <check if="memory search succeeds and patterns retrieved">
+      <output>📚 **MEMORY CONTEXT LOADED**
+
+        Retrieved story enrichment patterns from previous stories.
+        These patterns will inform acceptance criteria and dev notes construction.
+      </output>
+      <action>Use retrieved patterns to guide story enrichment and context creation</action>
+    </check>
+
+    <check if="no patterns found OR memory search fails">
+      <output>ℹ️ **No Previous Story Patterns Found**
+
+        First story enrichment or no similar features found - starting fresh.
+      </output>
+    </check>
+
+    <critical>Memory search is NON-BLOCKING: If it fails, workflow continues normally. Patterns enhance story quality but are not required for enrichment.</critical>
+
     <action>GOTO step 2a</action>
   </step>
 
@@ -340,6 +374,79 @@
 
       **The developer now has everything needed for flawless implementation!**
     </output>
+  </step>
+
+  <step n="6.5" goal="Store story enrichment patterns in memory">
+    <critical>Pattern 5: Post-work Memory Storage - Store story patterns for future SM/Dev retrieval</critical>
+
+    <action_note>After story file creation and sprint status update, store key patterns in both bmad-knowledge and agent-memory collections</action_note>
+
+    <action_section name="A. Store Story Enrichment Pattern (bmad-knowledge)">
+      <action>Extract story enrichment summary from created story file:
+        - Story key: {{story_key}}
+        - Epic and story numbers: {{epic_num}}.{{story_num}}
+        - Key acceptance criteria added
+        - Dev notes sections created
+        - File:line references to story.md sections
+      </action>
+
+      <action>Execute bmad-knowledge storage:
+        python3 {project-root}/src/core/workflows/tools/post-work-store.py sm {{story_key}} {{epic_num}} story-enrichment \
+          --what-built "Story enrichment for {{story_key}} in {{story_file}}:1-{{total_line_count}}. Acceptance Criteria: lines {{ac_lines}}, Dev Notes: lines {{dev_notes_lines}}, Technical Context: lines {{tech_context_lines}}" \
+          --integration "Dev Notes section provides implementation context for dev agent, Acceptance Criteria guide verification" \
+          --errors "None" \
+          --testing "Story validated against acceptance criteria requirements in step 6"
+      </action>
+
+      <check if="storage succeeds">
+        <output>💾 **STORY ENRICHMENT PATTERNS STORED IN MEMORY**
+
+          Stored story enrichment pattern in bmad-knowledge collection:
+          - ✅ Story {{story_key}} indexed
+          - ✅ Acceptance criteria captured
+          - ✅ Dev notes context saved
+          - ✅ File:line references to story.md included
+
+          **Future workflows will retrieve these patterns:**
+          - Dev agent will access for implementation context
+          - SM agent will retrieve for similar story enrichment
+        </output>
+      </check>
+
+      <check if="storage fails">
+        <output>⚠️ **MEMORY STORAGE FAILED**
+
+          Story enrichment could not be stored in memory.
+          Reason: {{error_reason}}
+
+          **This does NOT affect story completion** - your story file is complete and ready.
+
+          **Impact:** Future workflows will need to manually read story file instead of retrieving pre-indexed patterns.
+        </output>
+      </check>
+    </action_section>
+
+    <action_section name="B. Store Chat Memory (agent-memory)">
+      <action>Summarize key SM decisions from story enrichment:
+        - Key acceptance criteria added
+        - Dev notes checkpoint created
+        - Story complexity assessment
+      </action>
+
+      <action>Execute chat memory storage:
+        python3 {project-root}/src/core/workflows/tools/load-chat-context.py sm "story enrichment" --store \
+          --decision "Story {{story_key}} enriched: Key AC={{ac_summary}}, Checkpoint={{checkpoint}}, Ready for dev"
+      </action>
+
+      <check if="storage succeeds">
+        <output>💾 **SM STORY DECISIONS STORED IN CHAT MEMORY**
+
+          Stored story enrichment decisions in agent-memory for future SM context.
+        </output>
+      </check>
+    </action_section>
+
+    <critical>Memory storage is NON-BLOCKING: If it fails, workflow completes successfully. Memory enhances future workflows but is not required for story enrichment completion.</critical>
   </step>
 
 </workflow>
