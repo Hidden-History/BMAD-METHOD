@@ -199,13 +199,11 @@ services:
 # =============================================================================
 # NETWORKS
 # =============================================================================
+# 2025 Best Practice: Let Docker auto-assign subnet to avoid conflicts
 networks:
   bmad-memory:
     driver: bridge
     name: bmad-memory-network
-    ipam:
-      config:
-        - subnet: 172.28.0.0/16
 
 # =============================================================================
 # VOLUMES
