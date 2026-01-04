@@ -221,6 +221,39 @@
     </check>
   </step>
 
+  <step n="4.5" goal="Search memory for relevant patterns" tag="memory">
+    <critical>Pattern 5: Pre-work memory search - Load relevant patterns BEFORE implementation begins</critical>
+    <critical>This step implements the proven pattern from Legal AI production (85% token savings)</critical>
+
+    <action>Extract feature keywords from story title and first incomplete task</action>
+    <action>Construct feature description from story title + task description (e.g., "JWT authentication middleware")</action>
+
+    <action>Execute pre-work memory search:
+      python3 {project-root}/src/core/workflows/tools/pre-work-search.py dev {{story_key}} "{{feature_description}}"
+    </action>
+
+    <check if="memory search succeeds and patterns retrieved">
+      <output>📚 **MEMORY CONTEXT LOADED**
+
+        Retrieved relevant patterns from previous work.
+        These patterns will inform implementation approach and prevent repeated mistakes.
+
+        Review the context above before proceeding with implementation.
+      </output>
+      <action>Use retrieved patterns to guide implementation decisions</action>
+      <action>Reference file:line locations from memory context when implementing similar functionality</action>
+    </check>
+
+    <check if="no patterns found OR memory search fails">
+      <output>ℹ️ **No Previous Patterns Found**
+
+        This is the first time working on similar features - implementing fresh.
+        Your implementation will be stored in memory for future stories.
+      </output>
+      <action>Proceed with implementation without memory context</action>
+    </check>
+  </step>
+
   <step n="5" goal="Implement task following red-green-refactor cycle">
     <critical>FOLLOW THE STORY FILE TASKS/SUBTASKS SEQUENCE EXACTLY AS WRITTEN - NO DEVIATION</critical>
 
@@ -316,6 +349,106 @@
       <goto step="5">Next task</goto>
     </action>
     <action if="no tasks remain">
+      <goto step="8.5">Memory storage</goto>
+    </action>
+  </step>
+
+  <step n="8.5" goal="Store implementation patterns in memory" tag="memory">
+    <critical>Pattern 5: Post-work memory storage - Preserve implementation patterns AFTER all verification</critical>
+    <critical>This step implements the proven pattern from Legal AI production (100% data quality)</critical>
+    <critical>Pattern 4: File:line references are REQUIRED - storage will fail without them</critical>
+
+    <action>Review Dev Agent Record → Implementation Plan and Completion Notes to extract key patterns</action>
+    <action>Review File List to identify files created/modified with line ranges</action>
+    <action>Identify key implementation patterns to store:
+      - New components/modules created (with file:line references)
+      - Technical decisions made (with file:line references to implementation)
+      - Reusable patterns (middleware, validation, error handling, etc.)
+      - Integration points (how this connects with other components)
+      - Common errors encountered and how they were resolved
+      - Testing approach (with file:line references to test files)
+    </action>
+
+    <action>Extract epic_id from story file metadata ({{story_key}} contains epic-id-number)</action>
+    <action>Extract component name from story title or first task (e.g., "auth", "task-api", "validation")</action>
+
+    <critical>PATTERN 4 REQUIREMENT: The following fields MUST include file:line references like "src/auth/jwt.js:89-145"
+      - what-built: Implementation summary with file:line references
+      - testing: Test summary with file:line references to test files
+    </critical>
+
+    <action>Construct what-built summary (MUST include file:line references):
+      Example format:
+      "JWT authentication system implemented.
+      Token generation: src/auth/jwt.js:15-45
+      Middleware validation: src/middleware/auth.js:1-30
+      Auth routes: src/routes/auth.js:10-89
+
+      Key pattern (jwt.js:25-35):
+      ```javascript
+      function generateToken(userId) {
+        return jwt.sign({ id: userId }, SECRET, { expiresIn: '1h' });
+      }
+      ```"
+    </action>
+
+    <action>Construct integration summary:
+      How this component integrates with other parts of the system
+      Example: "Integrated with Express routes using app.use(authMiddleware)"
+    </action>
+
+    <action>Construct errors summary:
+      Common errors encountered during implementation or "None"
+    </action>
+
+    <action>Construct testing summary (MUST include file:line references):
+      Example: "Unit tests: tests/auth/jwt.test.js:10-89 (15 tests passing), Integration tests: tests/integration/auth.test.js:5-45"
+    </action>
+
+    <action>Execute post-work memory storage:
+      python3 {project-root}/src/core/workflows/tools/post-work-store.py dev {{story_key}} {{epic_id}} {{component}} \
+        --what-built "{{what_built_with_file_line_refs}}" \
+        --integration "{{integration_summary}}" \
+        --errors "{{errors_summary}}" \
+        --testing "{{testing_with_file_line_refs}}"
+    </action>
+
+    <check if="storage succeeds">
+      <output>💾 **IMPLEMENTATION PATTERNS STORED**
+
+        Stored memory shards in bmad-knowledge collection.
+        Future stories can retrieve and reuse these patterns.
+
+        This will save time on similar features in Stories 2-4.
+      </output>
+      <action>Add to Dev Agent Record → Completion Notes: "✅ Implementation patterns stored in memory"</action>
+    </check>
+
+    <check if="storage fails due to missing file:line references">
+      <output>⚠️ **MEMORY STORAGE FAILED - Missing File:Line References**
+
+        Pattern 4 validation failed: --what-built or --testing missing file:line references.
+
+        Required format: src/path/file.js:89-145
+
+        The story is complete but patterns were NOT stored.
+        Consider adding file:line references for future benefit.
+      </output>
+      <action>Add to Dev Agent Record → Completion Notes: "⚠️ Memory storage skipped - missing file:line references"</action>
+    </check>
+
+    <check if="storage fails for other reason">
+      <output>⚠️ **MEMORY STORAGE FAILED**
+
+        Error occurred during memory storage.
+        The story is complete but patterns were NOT stored.
+
+        This does not affect story completion - continuing anyway.
+      </output>
+      <action>Add to Dev Agent Record → Completion Notes: "⚠️ Memory storage failed - check memory system status"</action>
+    </check>
+
+    <action>
       <goto step="9">Completion</goto>
     </action>
   </step>
