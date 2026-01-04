@@ -441,8 +441,9 @@ if agent_stats['count'] == 0:
 # Check for indexing
 for stats in [knowledge_stats, bp_stats, agent_stats]:
     if not "error" in stats:
-        indexed = stats.get('indexed', 0)
-        total = stats.get('vectors_count', 0)
+        # Handle None values by converting to 0
+        indexed = stats.get('indexed', 0) or 0
+        total = stats.get('vectors_count', 0) or 0
         if indexed < total:
             recommendations.append(f"⚠️ {stats['name']}: Not all vectors indexed ({indexed}/{total})")
 
