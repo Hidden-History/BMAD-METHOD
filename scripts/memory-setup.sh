@@ -334,6 +334,7 @@ def create_collections():
     """Create all 3 collections if they don't exist."""
     # Get configuration
     qdrant_url = os.getenv("QDRANT_URL", "http://localhost:16350")
+    qdrant_api_key = os.getenv("QDRANT_API_KEY", "")
 
     collections = {
         "knowledge": os.getenv("QDRANT_KNOWLEDGE_COLLECTION", "bmad-knowledge"),
@@ -341,9 +342,12 @@ def create_collections():
         "agent_memory": os.getenv("QDRANT_AGENT_MEMORY_COLLECTION", "agent-memory"),
     }
 
-    # Connect to Qdrant
+    # Connect to Qdrant (with optional API key)
     try:
-        client = QdrantClient(url=qdrant_url)
+        if qdrant_api_key and qdrant_api_key.strip():
+            client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key)
+        else:
+            client = QdrantClient(url=qdrant_url)
     except Exception as e:
         print(f"❌ Failed to connect to Qdrant: {e}")
         return False
@@ -412,6 +416,8 @@ if env_path.exists():
 
 try:
     from memory import store_memory
+    from memory.models import MemoryShard
+    from datetime import datetime
 except ImportError as e:
     print(f"❌ Failed to import memory system: {e}")
     sys.exit(1)
@@ -537,20 +543,21 @@ def populate_seed():
         try:
             unique_id = f"seed-{practice['pattern_name'].lower().replace(' ', '-')}"
 
-            shard_id = store_memory(
-                information=practice["content"],
-                memory_type="best_practice",
+            # Create MemoryShard object
+            shard = MemoryShard(
+                content=practice["content"],
                 unique_id=unique_id,
+                group_id="universal",  # Best practices are universal
+                type="best_practice",
+                agent="system",
                 component=practice["category"],
                 importance=practice["importance"],
-                collection_type="best_practices",
-                agent="system",  # System-created best practice
-                metadata={
-                    "pattern_name": practice["pattern_name"],
-                    "category": practice["category"],
-                    "source": "BMAD Memory System",
-                    "validated": True,
-                }
+                created_at=datetime.now().strftime("%Y-%m-%d"),
+            )
+
+            shard_id = store_memory(
+                shard=shard,
+                collection_type="best_practices"
             )
 
             print(f"✅ [{i}/{len(SEED_PRACTICES)}] {practice['pattern_name']}")
@@ -604,6 +611,7 @@ if env_path.exists():
 def health_check():
     """Run health checks."""
     qdrant_url = os.getenv("QDRANT_URL", "http://localhost:16350")
+    qdrant_api_key = os.getenv("QDRANT_API_KEY", "")
 
     collections = {
         "knowledge": os.getenv("QDRANT_KNOWLEDGE_COLLECTION", "bmad-knowledge"),
@@ -615,7 +623,10 @@ def health_check():
     print("=" * 60)
 
     try:
-        client = QdrantClient(url=qdrant_url)
+        if qdrant_api_key and qdrant_api_key.strip():
+            client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key)
+        else:
+            client = QdrantClient(url=qdrant_url)
         print(f"✅ Qdrant connection: {qdrant_url}")
     except Exception as e:
         print(f"❌ Qdrant connection failed: {e}")

@@ -20,6 +20,7 @@ def create_collections():
     """Create all 3 collections if they don't exist."""
     # Get configuration
     qdrant_url = os.getenv("QDRANT_URL", "http://localhost:16350")
+    qdrant_api_key = os.getenv("QDRANT_API_KEY", "")
 
     collections = {
         "knowledge": os.getenv("QDRANT_KNOWLEDGE_COLLECTION", "bmad-knowledge"),
@@ -27,9 +28,12 @@ def create_collections():
         "agent_memory": os.getenv("QDRANT_AGENT_MEMORY_COLLECTION", "agent-memory"),
     }
 
-    # Connect to Qdrant
+    # Connect to Qdrant (with optional API key)
     try:
-        client = QdrantClient(url=qdrant_url)
+        if qdrant_api_key and qdrant_api_key.strip():
+            client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key)
+        else:
+            client = QdrantClient(url=qdrant_url)
     except Exception as e:
         print(f"❌ Failed to connect to Qdrant: {e}")
         return False

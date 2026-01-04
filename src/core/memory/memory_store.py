@@ -12,7 +12,7 @@ def get_client():
 
     # Handle empty API key (local Qdrant without auth)
     api_key = config["qdrant_api_key"]
-    if api_key:
+    if api_key and api_key.strip():
         return QdrantClient(url=config["qdrant_url"], api_key=api_key)
     else:
         return QdrantClient(url=config["qdrant_url"])
