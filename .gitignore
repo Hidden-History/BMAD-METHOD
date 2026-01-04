@@ -78,3 +78,35 @@ bmad-custom-src/
 # Docusaurus / Documentation Build
 .docusaurus/
 build/
+
+# ============================================
+# Qdrant Memory Integration
+# ============================================
+
+# Workspace files (parent directories - NEVER commit)
+../_project/
+../_reference/
+
+# Qdrant storage and data
+qdrant_storage/
+.qdrant/
+
+# Python environment and cache
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.python-version
+
+# Environment files with secrets
+.env.local
+.env.production
+
+# Monitoring data
+grafana_data/
+prometheus_data/
+
+# Memory system logs
+memory_*.log
+qdrant_*.log
