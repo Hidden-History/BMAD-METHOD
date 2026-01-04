@@ -116,6 +116,40 @@ Try to discover the following:
 - index.md is a guide to what's relevant whenever available
 - Track all successfully loaded files in frontmatter `inputDocuments` array
 
+#### A.1. Search Memory for Relevant PRD Patterns (CRITICAL)
+
+**🔍 Pattern 5: Pre-work Memory Search - Load relevant patterns BEFORE PRD creation**
+
+After discovering and loading input documents but BEFORE creating the PRD document:
+
+<action>Determine feature keywords from project_name and discovered input documents:
+- Extract key domain terms from project brief or product docs
+- Identify product type (web app, API, mobile app, etc.)
+- Construct search query: "{{project_type}} product requirements {{domain_keywords}}"
+</action>
+
+<action>Execute pre-work memory search:
+python3 {project-root}/src/core/workflows/tools/pre-work-search.py pm PRD-1 "{{search_query}}"
+</action>
+
+<check if="memory search succeeds and patterns retrieved">
+  <output>📚 **MEMORY CONTEXT LOADED**
+
+  Retrieved relevant PRD patterns from previous projects.
+  These patterns will inform requirements gathering and success criteria definition.
+  </output>
+  <action>Use retrieved patterns to guide PRD structure and requirements elicitation</action>
+</check>
+
+<check if="no patterns found OR memory search fails">
+  <output>ℹ️ **No Previous PRD Patterns Found**
+
+  This is the first PRD or no similar projects found - starting fresh.
+  </output>
+</check>
+
+<critical>Memory search is NON-BLOCKING: If it fails, workflow continues normally. Patterns enhance quality but are not required for PRD creation.</critical>
+
 #### B. Create Initial Document
 
 **Document Setup:**

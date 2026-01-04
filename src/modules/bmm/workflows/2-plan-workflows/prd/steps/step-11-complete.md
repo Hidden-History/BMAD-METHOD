@@ -136,6 +136,81 @@ Perform final validation of the PRD:
 - Confirm completion with user and summarize what you have done.
 - Update frontmatter: add this final step name to the end of the steps completed array.
 
+### 5.5. Store PRD Patterns in Memory (CRITICAL)
+
+**💾 Pattern 5: Post-work Memory Storage - Store requirements patterns for future PM/Architect/Dev retrieval**
+
+After PRD completion and validation, store key patterns in both bmad-knowledge and agent-memory collections:
+
+#### A. Store Requirements Pattern (bmad-knowledge)
+
+<action>Extract requirements summary from PRD:
+- Count of functional requirements (from step-09)
+- Count of non-functional requirements (from step-10)
+- Key user journeys identified (from step-04)
+- Project type and domain (from step-07)
+- File:line references to PRD sections
+</action>
+
+<action>Execute bmad-knowledge storage:
+python3 {project-root}/src/core/workflows/tools/post-work-store.py pm PRD-1 0 requirements \
+  --what-built "PRD for {{project_name}} documented in {outputFile}:1-{{total_line_count}}. Executive Summary: lines {{summary_lines}}, Success Criteria: lines {{criteria_lines}}, Functional Requirements ({{fr_count}} total): lines {{fr_lines}}, Non-Functional Requirements ({{nfr_count}} total): lines {{nfr_lines}}" \
+  --integration "Used by Architect for solution design, SM for epic breakdown, Dev for implementation context" \
+  --errors "None" \
+  --testing "PRD validated against success criteria template and user confirmation in step 11"
+</action>
+
+<check if="storage succeeds">
+  <output>💾 **PRD PATTERNS STORED IN MEMORY**
+
+  Stored requirements pattern in bmad-knowledge collection:
+  - ✅ {{fr_count}} functional requirements indexed
+  - ✅ {{nfr_count}} non-functional requirements indexed
+  - ✅ {{journey_count}} user journeys captured
+  - ✅ File:line references to PRD sections included
+
+  **Future workflows will retrieve these patterns:**
+  - Architect agent will reference requirements during solution design
+  - SM agent will retrieve requirements for epic breakdown
+  - Dev agent will access requirements context during implementation
+  </output>
+</check>
+
+<check if="storage fails">
+  <output>⚠️ **MEMORY STORAGE FAILED**
+
+  PRD requirements could not be stored in memory.
+  Reason: {{error_reason}}
+
+  **This does NOT affect PRD completion** - your PRD document is complete and ready.
+
+  **Impact:** Future workflows will need to manually read PRD instead of retrieving pre-indexed patterns.
+  </output>
+</check>
+
+#### B. Store Chat Memory (agent-memory)
+
+<action>Summarize key PM decisions from PRD workflow:
+- Success criteria defined
+- Scope decision (MVP boundaries from step-03)
+- Key differentiator identified
+- Project type classification
+</action>
+
+<action>Execute chat memory storage:
+python3 {project-root}/src/core/workflows/tools/load-chat-context.py pm "PRD decisions" --store \
+  --decision "PRD for {{project_name}}: Success criteria={{criteria_summary}}, Scope={{scope_decision}}, Type={{project_type}}, Differentiator={{differentiator}}"
+</action>
+
+<check if="storage succeeds">
+  <output>💾 **PM DECISIONS STORED IN CHAT MEMORY**
+
+  Stored key PRD decisions in agent-memory for future PM/Architect context.
+  </output>
+</check>
+
+<critical>Memory storage is NON-BLOCKING: If it fails, workflow completes successfully. Memory enhances future workflows but is not required for PRD completion.</critical>
+
 ## SUCCESS METRICS:
 
 ✅ PRD document contains all required sections
