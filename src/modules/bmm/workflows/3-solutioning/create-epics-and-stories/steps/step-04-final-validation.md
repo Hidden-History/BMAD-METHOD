@@ -139,6 +139,79 @@ If all validations pass:
 - Ensure proper formatting
 - Save the final epics.md
 
+### 6.5. Store Epic Breakdown Patterns in Memory (CRITICAL)
+
+**💾 Pattern 5: Post-work Memory Storage - Store epic patterns for future PM/SM retrieval**
+
+After validation passes and epic.md is finalized, store key patterns in both bmad-knowledge and agent-memory collections:
+
+#### A. Store Epic Breakdown Pattern (bmad-knowledge)
+
+<action>Extract epic breakdown summary from epics.md:
+- Count of epics created
+- Count of stories per epic
+- Epic organization strategy (by domain, by feature, by user journey, etc.)
+- Dependency structure (epic independence validated)
+- File:line references to epic sections
+</action>
+
+<action>Execute bmad-knowledge storage:
+python3 {project-root}/src/core/workflows/tools/post-work-store.py pm EPICS-1 0 epic-breakdown \
+  --what-built "Epic breakdown for {{project_name}} in {outputFile}:1-{{total_line_count}}. Created {{epic_count}} epics with {{total_story_count}} total stories. Epic 1 ({{epic_1_name}}): lines {{epic_1_lines}}, Epic 2 ({{epic_2_name}}): lines {{epic_2_lines}}{{#if epic_3_exists}}, Epic 3 ({{epic_3_name}}): lines {{epic_3_lines}}{{/if}}" \
+  --integration "Used by SM for sprint planning, Dev for story implementation context" \
+  --errors "None" \
+  --testing "Epic breakdown validated: FR coverage complete, dependencies checked, story quality verified in step 4"
+</action>
+
+<check if="storage succeeds">
+  <output>💾 **EPIC BREAKDOWN PATTERNS STORED IN MEMORY**
+
+  Stored epic breakdown pattern in bmad-knowledge collection:
+  - ✅ {{epic_count}} epics indexed
+  - ✅ {{total_story_count}} stories catalogued
+  - ✅ Dependency structure validated and stored
+  - ✅ File:line references to epics.md sections included
+
+  **Future workflows will retrieve these patterns:**
+  - SM agent will use for sprint planning and story prioritization
+  - Dev agent will access for story context during implementation
+  </output>
+</check>
+
+<check if="storage fails">
+  <output>⚠️ **MEMORY STORAGE FAILED**
+
+  Epic breakdown could not be stored in memory.
+  Reason: {{error_reason}}
+
+  **This does NOT affect epic completion** - your epics.md is complete and ready.
+
+  **Impact:** Future workflows will need to manually read epics.md instead of retrieving pre-indexed patterns.
+  </output>
+</check>
+
+#### B. Store Chat Memory (agent-memory)
+
+<action>Summarize key PM decisions from epic breakdown workflow:
+- Epic organization strategy chosen
+- Number of epics and stories decided
+- Progressive pattern identified (Epic 1 setup, Epic 2+ features)
+</action>
+
+<action>Execute chat memory storage:
+python3 {project-root}/src/core/workflows/tools/load-chat-context.py pm "epic breakdown" --store \
+  --decision "Epic breakdown for {{project_name}}: {{epic_count}} epics, {{total_story_count}} stories, Strategy={{organization_strategy}}, Dependencies validated"
+</action>
+
+<check if="storage succeeds">
+  <output>💾 **PM EPIC DECISIONS STORED IN CHAT MEMORY**
+
+  Stored epic breakdown decisions in agent-memory for future PM/SM context.
+  </output>
+</check>
+
+<critical>Memory storage is NON-BLOCKING: If it fails, workflow completes successfully. Memory enhances future workflows but is not required for epic completion.</critical>
+
 **Present Final Menu:**
 **All validations complete!** [C] Complete Workflow
 

@@ -93,6 +93,40 @@ Search for required documents using these patterns (sharded means a large docume
 
 Before proceeding, Ask the user if there are any other documents to include for analysis, and if anything found should be excluded. Wait for user confirmation. Once confirmed, create the {outputFile} from the {epicsTemplate} and in the front matter list the files in the array of `inputDocuments: []`.
 
+### 2.5. Search Memory for Epic Breakdown Patterns (CRITICAL)
+
+**🔍 Pattern 5: Pre-work Memory Search - Load epic breakdown patterns BEFORE extraction**
+
+After user confirms documents but BEFORE extracting requirements:
+
+<action>Determine feature keywords from project_name and discovered PRD/Architecture:
+- Extract key product type from PRD (web app, API, mobile, etc.)
+- Identify domain from PRD (e-commerce, SaaS, fintech, etc.)
+- Construct search query: "epic breakdown {{product_type}} {{domain}}"
+</action>
+
+<action>Execute pre-work memory search:
+python3 {project-root}/src/core/workflows/tools/pre-work-search.py pm EPICS-1 "{{search_query}}"
+</action>
+
+<check if="memory search succeeds and patterns retrieved">
+  <output>📚 **MEMORY CONTEXT LOADED**
+
+  Retrieved epic breakdown patterns from previous projects.
+  These patterns will inform epic organization and story decomposition strategy.
+  </output>
+  <action>Use retrieved patterns to guide epic structure and dependency planning</action>
+</check>
+
+<check if="no patterns found OR memory search fails">
+  <output>ℹ️ **No Previous Epic Patterns Found**
+
+  First epic breakdown or no similar projects found - starting fresh.
+  </output>
+</check>
+
+<critical>Memory search is NON-BLOCKING: If it fails, workflow continues normally. Patterns enhance epic quality but are not required for breakdown.</critical>
+
 ### 3. Extract Functional Requirements (FRs)
 
 From the PRD document (full or sharded), read then entire document and extract ALL functional requirements:
