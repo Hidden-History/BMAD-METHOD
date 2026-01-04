@@ -287,9 +287,9 @@ EOF
         print_success "docker-compose.yml created"
     fi
 
-    # Start Qdrant
-    echo "Starting Qdrant container..."
-    docker compose up -d qdrant
+    # Start ALL monitoring services (Qdrant, Prometheus, Grafana, Streamlit)
+    echo "Starting all monitoring containers..."
+    docker compose up -d
 
     # Wait for Qdrant to be ready
     echo "⏳ Waiting for Qdrant to start..."
