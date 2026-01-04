@@ -91,7 +91,24 @@ npx bmad-method@latest install
 ```
 
 
-### 2. Initialize Your Project
+### 2. Optional: Install Memory System
+
+Add persistent memory to capture and reuse patterns across workflows:
+
+```bash
+bash scripts/memory-setup.sh
+```
+
+This installs Qdrant vector database for:
+- **Project Memory** - Code patterns and story outcomes
+- **Best Practices** - Universal patterns learned over time
+- **Chat Memory** - Decisions from agent conversations
+
+**Benefits:** 85% token savings, automatic context retrieval, pattern learning
+
+**Details:** See [Memory System Installation Guide](./docs/memory/README.md)
+
+### 3. Initialize Your Project
 
 Load any agent in your IDE and run:
 
@@ -101,7 +118,7 @@ Load any agent in your IDE and run:
 
 This analyzes your project and recommends the right workflow track.
 
-### 3. Choose Your Track
+### 4. Choose Your Track
 
 BMad Method adapts to your needs with three intelligent tracks:
 
