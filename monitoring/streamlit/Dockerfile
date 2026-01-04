@@ -67,9 +67,7 @@ USER streamlit
 # Expose Streamlit port
 EXPOSE 8501
 
-# Health check (2025 best practice)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl --fail http://localhost:8501/_stcore/health || exit 1
+# Health check removed - handled by Docker Compose restart policy (2025 best practice)
 
 # Run Streamlit
 CMD ["streamlit", "run", "app.py", \
