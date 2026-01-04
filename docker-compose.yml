@@ -24,8 +24,8 @@ services:
     image: qdrant/qdrant:latest
     container_name: bmad-qdrant
     ports:
-      - "6333:6333"   # REST API
-      - "6334:6334"   # gRPC API
+      - "16350:6333"   # REST API (changed from 6333 to avoid conflicts)
+      - "16351:6334"   # gRPC API (changed from 6334 to avoid conflicts)
     volumes:
       - qdrant_storage:/qdrant/storage
       - ./qdrant_config:/qdrant/config:ro  # Optional: custom configuration
@@ -64,7 +64,7 @@ services:
     image: prom/prometheus:latest
     container_name: bmad-prometheus
     ports:
-      - "9090:9090"
+      - "19095:9090"   # Metrics UI (changed from 9090 to avoid conflicts)
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/prometheus/alerts:/etc/prometheus/alerts:ro
@@ -104,7 +104,7 @@ services:
     image: grafana/grafana:latest
     container_name: bmad-grafana
     ports:
-      - "3000:3000"
+      - "13005:3000"   # Dashboard UI (changed from 3000 to avoid conflicts)
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
@@ -155,7 +155,7 @@ services:
       dockerfile: Dockerfile
     container_name: bmad-streamlit
     ports:
-      - "8501:8501"
+      - "18505:8501"   # Dashboard UI (changed from 8501 to avoid conflicts)
     volumes:
       - ./monitoring/streamlit:/app:ro  # Read-only for security
       - streamlit_cache:/app/.streamlit  # Cache directory

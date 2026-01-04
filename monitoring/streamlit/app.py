@@ -29,11 +29,15 @@ load_dotenv()
 # CONFIGURATION
 # =============================================================================
 
+# Use internal container name for Docker network communication
 QDRANT_URL = os.getenv("QDRANT_URL", "http://qdrant:6333")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")
 KNOWLEDGE_COLLECTION = os.getenv("QDRANT_KNOWLEDGE_COLLECTION", "bmad-knowledge")
 BEST_PRACTICES_COLLECTION = os.getenv("QDRANT_BEST_PRACTICES_COLLECTION", "bmad-best-practices")
 AGENT_MEMORY_COLLECTION = os.getenv("QDRANT_AGENT_MEMORY_COLLECTION", "agent-memory")
+
+# NOTE: When accessing from host machine, use http://localhost:16350
+# Inside Docker network, containers use http://qdrant:6333
 
 # Page configuration (2025 best practice: set first)
 st.set_page_config(

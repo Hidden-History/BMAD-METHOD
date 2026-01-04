@@ -79,7 +79,7 @@ scrape_configs:
   # ---------------------------------------------------------------------------
   - job_name: 'grafana'
     static_configs:
-      - targets: ['grafana:3000']
+      - targets: ['grafana:3000']   # Internal container port (not external)
     metrics_path: '/metrics'
     scrape_interval: 60s  # Less critical, scrape less frequently
 
