@@ -60,8 +60,8 @@ def main():
     parser.add_argument(
         "--min-score",
         type=float,
-        default=0.5,
-        help="Minimum relevance score (default: 0.5)"
+        default=0.3,
+        help="Minimum relevance score (default: 0.3, lowered per 2025 RAG best practices)"
     )
 
     args = parser.parse_args()

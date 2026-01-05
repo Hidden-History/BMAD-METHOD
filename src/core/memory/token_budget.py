@@ -30,15 +30,19 @@ def get_memory_limit(_agent: AgentName) -> int:
 
 
 def get_optimal_context(
-    agent: AgentName, results: list, include_score_threshold: float = 0.5
+    agent: AgentName, results: list, include_score_threshold: float = 0.0
 ) -> tuple[list, int]:
     """
     Select optimal memories within token budget.
 
+    Uses Qdrant's semantic ranking without post-filtering. Following 2025 RAG best practices,
+    we trust vector search ranking and let the LLM determine relevance. Scores 0.3-0.5 often
+    contain useful context that strict thresholds would eliminate.
+
     Args:
         agent: Agent name
-        results: Search results
-        include_score_threshold: Minimum similarity score
+        results: Search results (pre-ranked by Qdrant)
+        include_score_threshold: Minimum similarity score (default 0.0 = no post-filtering)
 
     Returns:
         tuple: (selected_results, total_tokens)
@@ -50,7 +54,7 @@ def get_optimal_context(
     total_tokens = 0
 
     for result in results[:max_memories]:
-        # Check score threshold
+        # Optional score filtering (default 0.0 = accept all ranked results)
         if result.score < include_score_threshold:
             continue
 
