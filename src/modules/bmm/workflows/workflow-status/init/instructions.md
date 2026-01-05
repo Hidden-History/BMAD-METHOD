@@ -359,8 +359,7 @@ Happy building! 🚀</output>
 </action>
 
 <action>Execute chat memory storage:
-python3 {project-root}/src/core/workflows/tools/load-chat-context.py analyst "workflow classification" --store \
-  --decision "{{decision_summary}}"
+python3 {project-root}/src/core/workflows/tools/store-chat-memory.py analyst "workflow-classification" "{{decision_summary}}"
 </action>
 
 <check if="storage succeeds">
