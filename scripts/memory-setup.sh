@@ -360,10 +360,20 @@ cat > scripts/memory/create-collections.py << 'PYEOF'
 
 import os
 import sys
+from pathlib import Path
 
-# WSL Best Practice: Use environment variable instead of os.getcwd()
-# Passed by memory-setup.sh as BMAD_PROJECT_ROOT
-project_root = os.environ.get('BMAD_PROJECT_ROOT', os.getcwd())
+# 2025 Best Practice: Use os.path.normpath(os.path.abspath(__file__))
+# This avoids Path.resolve() symlink issues and WSL getcwd() failures
+# Canonical approach per Python community research (Jan 2025)
+try:
+    # Primary method: __file__ with normalization (no symlink resolution)
+    script_path = Path(os.path.normpath(os.path.abspath(__file__)))
+    project_root = str(script_path.parent.parent)
+except (OSError, NameError):
+    # Fallback: sys.argv[0] if __file__ fails (rare but possible)
+    script_path = Path(os.path.normpath(os.path.abspath(sys.argv[0])))
+    project_root = str(script_path.parent.parent)
+
 sys.path.insert(0, os.path.join(project_root, "src", "core"))
 
 from dotenv import load_dotenv
@@ -426,8 +436,7 @@ PYEOF
 chmod +x scripts/memory/create-collections.py
 
 # Run with system Python (2026 best practice - no venv issues)
-# Pass PROJECT_ROOT as env var for WSL compatibility
-BMAD_PROJECT_ROOT="$PROJECT_ROOT" python3 scripts/memory/create-collections.py
+python3 scripts/memory/create-collections.py
 
 # ========================================
 # HEALTH CHECK
@@ -441,11 +450,18 @@ cat > scripts/memory/health-check.py << 'PYHCEOF'
 
 import os
 import sys
+from pathlib import Path
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 
-# WSL Best Practice: Use environment variable instead of os.getcwd()
-project_root = os.environ.get('BMAD_PROJECT_ROOT', os.getcwd())
+# 2025 Best Practice: Use os.path.normpath(os.path.abspath(__file__))
+try:
+    script_path = Path(os.path.normpath(os.path.abspath(__file__)))
+    project_root = str(script_path.parent.parent)
+except (OSError, NameError):
+    script_path = Path(os.path.normpath(os.path.abspath(sys.argv[0])))
+    project_root = str(script_path.parent.parent)
+
 env_path = os.path.join(project_root, '.env')
 if os.path.exists(env_path):
     load_dotenv(env_path, override=True)  # Override shell environment
@@ -468,7 +484,7 @@ except Exception as e:
 PYHCEOF
 
 chmod +x scripts/memory/health-check.py
-BMAD_PROJECT_ROOT="$PROJECT_ROOT" python3 scripts/memory/health-check.py
+python3 scripts/memory/health-check.py
 
 # ========================================
 # INSTALL CLAUDE CODE HOOKS
