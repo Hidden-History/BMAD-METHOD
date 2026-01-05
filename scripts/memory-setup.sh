@@ -318,17 +318,18 @@ cat > scripts/memory/create-collections.py << 'PYEOF'
 
 import os
 import sys
-from pathlib import Path
 
-# Add src/core to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src" / "core"))
+# WSL Best Practice: Use os.getcwd() instead of Path(__file__)
+# memory-setup.sh has already cd'd to PROJECT_ROOT
+project_root = os.getcwd()
+sys.path.insert(0, os.path.join(project_root, "src", "core"))
 
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient, models
 
-# Load environment
-env_path = Path(__file__).parent.parent.parent / '.env'
-if env_path.exists():
+# Load environment from project root
+env_path = os.path.join(project_root, '.env')
+if os.path.exists(env_path):
     load_dotenv(env_path)
 
 # Connection
@@ -397,13 +398,13 @@ cat > scripts/memory/health-check.py << 'PYHCEOF'
 
 import os
 import sys
-from pathlib import Path
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 
-# Load environment
-env_path = Path(__file__).parent.parent.parent / '.env'
-if env_path.exists():
+# WSL Best Practice: Use os.getcwd() instead of Path(__file__)
+project_root = os.getcwd()
+env_path = os.path.join(project_root, '.env')
+if os.path.exists(env_path):
     load_dotenv(env_path)
 
 QDRANT_URL = os.getenv('QDRANT_URL', 'http://localhost:16350')
