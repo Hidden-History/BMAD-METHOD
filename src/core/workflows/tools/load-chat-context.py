@@ -35,7 +35,7 @@ try:
     from dotenv import load_dotenv
     env_path = Path(__file__).parent.parent.parent.parent / '.env'
     if env_path.exists():
-        load_dotenv(env_path)
+        load_dotenv(env_path, override=True)  # Override parent shell env vars
 except ImportError:
     pass
 
@@ -81,7 +81,7 @@ def main():
 
     # Import memory search
     try:
-        from memory import search_memories, format_for_context
+        from memory.memory_search import search_memories, format_for_context
         from memory.token_budget import get_token_limit
     except ImportError as e:
         print(f"ERROR: Failed to import memory system: {e}", file=sys.stderr)

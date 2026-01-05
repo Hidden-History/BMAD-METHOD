@@ -37,7 +37,7 @@ try:
     from dotenv import load_dotenv
     env_path = Path(__file__).parent.parent.parent.parent / '.env'
     if env_path.exists():
-        load_dotenv(env_path)
+        load_dotenv(env_path, override=True)  # Override parent shell env vars
 except ImportError:
     pass
 
@@ -98,7 +98,7 @@ def main():
     # Import memory system
     try:
         from memory.models import MemoryShard
-        from memory import store_memory
+        from memory.memory_store import store_memory
     except ImportError as e:
         print(f"❌ ERROR: Failed to import memory system: {e}", file=sys.stderr)
         return 1
