@@ -117,16 +117,20 @@ def main():
         print(f"Valid agents: {', '.join(valid_agents)}", file=sys.stderr)
         return 1
 
-    # Pattern 4: Validate file:line references
-    is_valid, error = validate_file_references(args.what_built)
-    if not is_valid:
-        print(error, file=sys.stderr)
-        return 1
+    # Pattern 4: Validate file:line references (only for implementation agents)
+    # Planning agents (pm, architect, analyst, sm) create docs, not code
+    implementation_agents = ["dev", "tea", "quick-flow-solo-dev"]
 
-    is_valid, error = validate_file_references(args.testing)
-    if not is_valid:
-        print("Testing section " + error, file=sys.stderr)
-        return 1
+    if args.agent in implementation_agents:
+        is_valid, error = validate_file_references(args.what_built)
+        if not is_valid:
+            print(error, file=sys.stderr)
+            return 1
+
+        is_valid, error = validate_file_references(args.testing)
+        if not is_valid:
+            print("Testing section " + error, file=sys.stderr)
+            return 1
 
     # Import memory hooks
     try:
