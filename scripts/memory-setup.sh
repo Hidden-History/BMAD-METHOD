@@ -198,9 +198,49 @@ print_success "Directory structure created"
 
 print_header "🔧 CONFIGURING ENVIRONMENT"
 
-# Create .env file if it doesn't exist
-if [ ! -f .env ]; then
-    # Prompt for PROJECT_ID
+# Create or update .env file
+if [ -f .env ]; then
+    # Show existing PROJECT_ID
+    EXISTING_PROJECT_ID=$(grep "^PROJECT_ID=" .env 2>/dev/null | cut -d'=' -f2)
+    if [ -n "$EXISTING_PROJECT_ID" ]; then
+        print_warning ".env file already exists with PROJECT_ID=${EXISTING_PROJECT_ID}"
+        read -p "Keep existing PROJECT_ID? (y/n): " KEEP_EXISTING
+
+        if [[ "$KEEP_EXISTING" =~ ^[Yy]$ ]]; then
+            PROJECT_ID="$EXISTING_PROJECT_ID"
+            print_success "Using existing PROJECT_ID=${PROJECT_ID}"
+        else
+            read -p "Enter new PROJECT_ID (lowercase, hyphenated): " PROJECT_ID
+
+            # Validate PROJECT_ID
+            if [[ ! "$PROJECT_ID" =~ ^[a-z0-9-]+$ ]]; then
+                print_error "Invalid PROJECT_ID. Use only lowercase letters, numbers, and hyphens."
+                exit 1
+            fi
+
+            # Update .env with new PROJECT_ID
+            if grep -q "^PROJECT_ID=" .env; then
+                sed -i "s/^PROJECT_ID=.*/PROJECT_ID=${PROJECT_ID}/" .env
+            else
+                echo "PROJECT_ID=${PROJECT_ID}" >> .env
+            fi
+            print_success ".env updated with PROJECT_ID=${PROJECT_ID}"
+        fi
+    else
+        # .env exists but no PROJECT_ID found
+        read -p "Enter PROJECT_ID (lowercase, hyphenated, e.g., 'my-project'): " PROJECT_ID
+
+        # Validate PROJECT_ID
+        if [[ ! "$PROJECT_ID" =~ ^[a-z0-9-]+$ ]]; then
+            print_error "Invalid PROJECT_ID. Use only lowercase letters, numbers, and hyphens."
+            exit 1
+        fi
+
+        echo "PROJECT_ID=${PROJECT_ID}" >> .env
+        print_success ".env updated with PROJECT_ID=${PROJECT_ID}"
+    fi
+else
+    # Create new .env file
     read -p "Enter PROJECT_ID (lowercase, hyphenated, e.g., 'my-project'): " PROJECT_ID
 
     # Validate PROJECT_ID
@@ -223,7 +263,7 @@ QDRANT_AGENT_MEMORY_COLLECTION=agent-memory
 # Memory Mode (hybrid = Qdrant + file fallback)
 MEMORY_MODE=hybrid
 ENABLE_MEMORY_FALLBACK=true
-PROJECT_ID=\${PROJECT_ID}
+PROJECT_ID=${PROJECT_ID}
 
 # Token Budgets (Pattern 3)
 # architect: 1500, analyst: 1200, pm: 1200
@@ -241,8 +281,6 @@ EMBEDDING_DIMENSION=384
 EOF
 
     print_success ".env file created with PROJECT_ID=${PROJECT_ID}"
-else
-    print_warning ".env file already exists. Skipping creation."
 fi
 
 # ========================================
