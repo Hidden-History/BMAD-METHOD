@@ -42,7 +42,7 @@ try:
     from dotenv import load_dotenv
     env_path = Path(__file__).parent.parent.parent.parent / '.env'
     if env_path.exists():
-        load_dotenv(env_path)
+        load_dotenv(env_path, override=True)  # Override parent shell env vars
 except ImportError:
     pass
 

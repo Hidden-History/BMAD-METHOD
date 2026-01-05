@@ -52,10 +52,11 @@ def store_memory(shard: MemoryShard, collection_type: str = "bmad_knowledge") ->
     # Generate embedding
     embedding = model.encode(shard.content).tolist()
 
-    # Store
+    # Store (wait=True ensures synchronous persistence)
     client.upsert(
         collection_name=collection_name,
         points=[{"id": shard.id, "vector": embedding, "payload": shard.to_payload()}],
+        wait=True  # Block until persisted to disk
     )
 
     return shard.id
@@ -99,7 +100,11 @@ def store_batch(shards: list[MemoryShard], collection_type: str = "bmad_knowledg
         for shard, embedding in zip(shards, embeddings, strict=False)
     ]
 
-    # Store batch
-    client.upsert(collection_name=collection_name, points=points)
+    # Store batch (wait=True ensures synchronous persistence)
+    client.upsert(
+        collection_name=collection_name,
+        points=points,
+        wait=True  # Block until persisted to disk
+    )
 
     return [s.id for s in shards]
