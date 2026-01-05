@@ -215,3 +215,40 @@ class AgentMemoryHooks:
         )
 
         return store_memory(shard)
+
+    def after_workflow_decision(
+        self,
+        decision_type: str,
+        decision: str,
+        rationale: str,
+        workflow_stage: str,
+        story_id: str | None = None,
+    ) -> str:
+        """
+        Store workflow decision after PM/analyst makes it.
+
+        Args:
+            decision_type: Type of decision (e.g., "classification", "scope", "priority")
+            decision: The decision made
+            rationale: Why this decision was made
+            workflow_stage: Stage in workflow (e.g., "PRD", "Epic Breakdown")
+            story_id: Optional story ID
+
+        Returns:
+            str: Shard ID
+        """
+        content = f"Workflow decision: {decision}. Rationale: {rationale}. Context: {decision_type} decision during {workflow_stage}."
+
+        shard = MemoryShard(
+            content=content,
+            unique_id=f"workflow-{decision_type}-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            group_id=self.group_id,
+            type="workflow_decision",
+            agent=self.agent,
+            component=workflow_stage,
+            importance="medium",
+            story_id=story_id,
+            created_at=datetime.now().isoformat(),
+        )
+
+        return store_memory(shard, collection_type='agent_memory')
