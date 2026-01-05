@@ -138,29 +138,24 @@ def main():
         )
 
         # Create memory shard
+        project_id = os.getenv('PROJECT_ID', 'unknown-project')
         shard = MemoryShard(
             content=implementation_content,
+            unique_id=f"impl-{hashlib.sha256(content_changed.encode()).hexdigest()[:16]}",
+            group_id=project_id,
             type="implementation_detail",
-            metadata={
-                "component": component,
-                "file_path": file_path,
-                "tool": tool_name,
-                "change_type": get_change_type(tool_name, file_path),
-                "file_extension": extract_file_extension(file_path),
-                "importance": "medium",
-                "content_hash": hashlib.sha256(content_changed.encode()).hexdigest()
-            }
+            agent="dev",
+            component=component,
+            importance="medium",
+            created_at=datetime.now().isoformat(),
+            story_id=None,  # Could be extracted from context if available
+            epic_id=None
         )
-
-        # Store in project memory
-        project_id = os.getenv('PROJECT_ID')
-        collection_name = os.getenv('QDRANT_KNOWLEDGE_COLLECTION', 'bmad-knowledge')
 
         try:
             shard_id = store_memory(
                 shard=shard,
-                collection_name=collection_name,
-                group_id=project_id
+                collection_type='bmad_knowledge'
             )
 
             print(f"\n✅ Stored implementation memory:", file=sys.stderr)

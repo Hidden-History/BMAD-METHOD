@@ -125,11 +125,10 @@ def main():
         if project_id:
             error_patterns = search_memories(
                 query=f"{query} error solution fix",
-                collection_name=os.getenv('QDRANT_KNOWLEDGE_COLLECTION', 'bmad-knowledge'),
+                collection_type='bmad_knowledge',
                 group_id=project_id,
                 memory_types=['error_pattern', 'bug_fix'],
-                limit=3,
-                min_score=0.5
+                limit=3
             )
 
             if error_patterns:
@@ -143,10 +142,9 @@ def main():
         # Search universal best practices for error type
         best_practices = search_memories(
             query=f"{error_type} common solution pattern fix",
-            collection_name=os.getenv('QDRANT_BEST_PRACTICES_COLLECTION', 'bmad-best-practices'),
+            collection_type='best_practices',
             memory_types=['best_practice', 'error_pattern'],
-            limit=2,
-            min_score=0.5
+            limit=2
         )
 
         if best_practices:

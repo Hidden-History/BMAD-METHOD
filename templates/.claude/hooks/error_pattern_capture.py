@@ -190,29 +190,25 @@ def main():
         error_content = create_error_content(command, output, error_type, component)
 
         # Create memory shard
+        project_id = os.getenv('PROJECT_ID', 'unknown-project')
+        error_hash = hashlib.sha256(output.encode()).hexdigest()[:16]
         shard = MemoryShard(
             content=error_content,
+            unique_id=f"error-{error_hash}",
+            group_id=project_id,
             type="error_pattern",
-            metadata={
-                "component": component,
-                "error_type": error_type,
-                "exit_code": exit_code,
-                "command": command[:200],  # Truncate long commands
-                "importance": "high",  # Errors are high importance
-                "resolved": False,  # Mark as unresolved initially
-                "error_hash": hashlib.sha256(output.encode()).hexdigest()[:16]
-            }
+            agent="dev",
+            component=component,
+            importance="high",  # Errors are high importance
+            created_at=datetime.now().isoformat(),
+            story_id=None,
+            epic_id=None
         )
-
-        # Store in project memory
-        project_id = os.getenv('PROJECT_ID')
-        collection_name = os.getenv('QDRANT_KNOWLEDGE_COLLECTION', 'bmad-knowledge')
 
         try:
             shard_id = store_memory(
                 shard=shard,
-                collection_name=collection_name,
-                group_id=project_id
+                collection_type='bmad_knowledge'
             )
 
             print(f"\n✅ Captured error pattern:", file=sys.stderr)

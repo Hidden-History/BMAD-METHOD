@@ -174,26 +174,25 @@ def main():
         print(f"\n{summary[:300]}...", file=sys.stderr)
 
         # Create memory shard
+        project_id = os.getenv('PROJECT_ID', 'unknown-project')
+        timestamp = datetime.now().isoformat()
         shard = MemoryShard(
             content=summary,
+            unique_id=f"session-end-{timestamp}",
+            group_id=project_id,
             type="session_summary",
-            metadata={
-                "source": "session_end",
-                "importance": "high",
-                "session_ended_at": datetime.now().isoformat(),
-                "scope": ', '.join(analyze_session_scope(session_data))
-            }
+            agent="system",
+            component="session-management",
+            importance="high",
+            created_at=timestamp,
+            story_id=None,
+            epic_id=None
         )
-
-        # Store in project memory
-        project_id = os.getenv('PROJECT_ID')
-        collection_name = os.getenv('QDRANT_KNOWLEDGE_COLLECTION', 'bmad-knowledge')
 
         try:
             shard_id = store_memory(
                 shard=shard,
-                collection_name=collection_name,
-                group_id=project_id
+                collection_type='agent_memory'
             )
 
             print(f"\n✅ Saved session summary", file=sys.stderr)

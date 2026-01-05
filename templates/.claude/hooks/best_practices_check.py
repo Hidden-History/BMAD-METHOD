@@ -97,10 +97,9 @@ def main():
         # Search 1: Universal best practices
         best_practices = search_memories(
             query=f"{category} {ext} coding standards patterns",
-            collection_name=os.getenv('QDRANT_BEST_PRACTICES_COLLECTION', 'bmad-best-practices'),
+            collection_type='best_practices',
             memory_types=['best_practice'],
-            limit=3,
-            min_score=0.5
+            limit=3
         )
 
         if best_practices:
@@ -115,11 +114,10 @@ def main():
         if project_id:
             similar_files = search_memories(
                 query=f"{component} {ext} implementation pattern",
-                collection_name=os.getenv('QDRANT_KNOWLEDGE_COLLECTION', 'bmad-knowledge'),
+                collection_type='bmad_knowledge',
                 group_id=project_id,
                 memory_types=['implementation_detail', 'story_outcome'],
-                limit=3,
-                min_score=0.6
+                limit=3
             )
 
             if similar_files:

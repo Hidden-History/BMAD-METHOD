@@ -9,6 +9,7 @@ import json
 import sys
 import os
 import re
+import hashlib
 from datetime import datetime
 
 # Add project src to path
@@ -188,7 +189,6 @@ def main():
 
         # Store each best practice
         stored_count = 0
-        collection_name = os.getenv('QDRANT_BEST_PRACTICES_COLLECTION', 'bmad-best-practices')
 
         for i, practice in enumerate(best_practices, 1):
             # Categorize and truncate
@@ -198,25 +198,26 @@ def main():
             print(f"\n{i}. Category: {category}", file=sys.stderr)
             print(f"   Preview: {truncated[:100]}...", file=sys.stderr)
 
-            # Create memory shard
+            # Create memory shard (universal, not project-specific)
+            practice_hash = hashlib.sha256(truncated.encode()).hexdigest()[:16]
             shard = MemoryShard(
                 content=truncated,
+                unique_id=f"bp-{category}-{practice_hash}",
+                group_id="universal",  # Universal best practice
                 type="best_practice",
-                metadata={
-                    "category": category,
-                    "source": "research_extraction",
-                    "agent": agent_type,
-                    "importance": "medium",
-                    "extracted_at": datetime.now().isoformat()
-                }
+                agent=agent_type if agent_type else "unknown",
+                component=category,
+                importance="medium",
+                created_at=datetime.now().isoformat(),
+                story_id=None,
+                epic_id=None
             )
 
             try:
-                # Store in universal best practices collection (no group_id)
+                # Store in universal best practices collection
                 shard_id = store_memory(
                     shard=shard,
-                    collection_name=collection_name,
-                    group_id=None  # Universal, not project-specific
+                    collection_type='best_practices'
                 )
 
                 print(f"   ✓ Stored: {shard_id}", file=sys.stderr)
