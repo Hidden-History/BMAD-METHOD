@@ -361,9 +361,9 @@ cat > scripts/memory/create-collections.py << 'PYEOF'
 import os
 import sys
 
-# WSL Best Practice: Use os.getcwd() instead of Path(__file__)
-# memory-setup.sh has already cd'd to PROJECT_ROOT
-project_root = os.getcwd()
+# WSL Best Practice: Use environment variable instead of os.getcwd()
+# Passed by memory-setup.sh as BMAD_PROJECT_ROOT
+project_root = os.environ.get('BMAD_PROJECT_ROOT', os.getcwd())
 sys.path.insert(0, os.path.join(project_root, "src", "core"))
 
 from dotenv import load_dotenv
@@ -426,7 +426,8 @@ PYEOF
 chmod +x scripts/memory/create-collections.py
 
 # Run with system Python (2026 best practice - no venv issues)
-python3 scripts/memory/create-collections.py
+# Pass PROJECT_ROOT as env var for WSL compatibility
+BMAD_PROJECT_ROOT="$PROJECT_ROOT" python3 scripts/memory/create-collections.py
 
 # ========================================
 # HEALTH CHECK
@@ -443,8 +444,8 @@ import sys
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 
-# WSL Best Practice: Use os.getcwd() instead of Path(__file__)
-project_root = os.getcwd()
+# WSL Best Practice: Use environment variable instead of os.getcwd()
+project_root = os.environ.get('BMAD_PROJECT_ROOT', os.getcwd())
 env_path = os.path.join(project_root, '.env')
 if os.path.exists(env_path):
     load_dotenv(env_path, override=True)  # Override shell environment
@@ -467,7 +468,7 @@ except Exception as e:
 PYHCEOF
 
 chmod +x scripts/memory/health-check.py
-python3 scripts/memory/health-check.py
+BMAD_PROJECT_ROOT="$PROJECT_ROOT" python3 scripts/memory/health-check.py
 
 # ========================================
 # INSTALL CLAUDE CODE HOOKS
