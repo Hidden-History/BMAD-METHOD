@@ -198,8 +198,8 @@ python3 {project-root}/src/core/workflows/tools/post-work-store.py pm PRD-1 0 re
 </action>
 
 <action>Execute chat memory storage:
-python3 {project-root}/src/core/workflows/tools/load-chat-context.py pm "PRD decisions" --store \
-  --decision "PRD for {{project_name}}: Success criteria={{criteria_summary}}, Scope={{scope_decision}}, Type={{project_type}}, Differentiator={{differentiator}}"
+python3 {project-root}/src/core/workflows/tools/store-chat-memory.py pm "prd-decisions" \
+  "PRD for {{project_name}}: Success criteria={{criteria_summary}}, Scope={{scope_decision}}, Type={{project_type}}, Differentiator={{differentiator}}"
 </action>
 
 <check if="storage succeeds">

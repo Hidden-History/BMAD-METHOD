@@ -199,8 +199,8 @@ python3 {project-root}/src/core/workflows/tools/post-work-store.py pm EPICS-1 0 
 </action>
 
 <action>Execute chat memory storage:
-python3 {project-root}/src/core/workflows/tools/load-chat-context.py pm "epic breakdown" --store \
-  --decision "Epic breakdown for {{project_name}}: {{epic_count}} epics, {{total_story_count}} stories, Strategy={{organization_strategy}}, Dependencies validated"
+python3 {project-root}/src/core/workflows/tools/store-chat-memory.py pm "epic-breakdown" \
+  "Epic breakdown for {{project_name}}: {{epic_count}} epics, {{total_story_count}} stories, Strategy={{organization_strategy}}, Dependencies validated"
 </action>
 
 <check if="storage succeeds">

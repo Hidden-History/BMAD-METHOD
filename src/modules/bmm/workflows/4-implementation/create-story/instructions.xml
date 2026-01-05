@@ -434,8 +434,8 @@
       </action>
 
       <action>Execute chat memory storage:
-        python3 {project-root}/src/core/workflows/tools/load-chat-context.py sm "story enrichment" --store \
-          --decision "Story {{story_key}} enriched: Key AC={{ac_summary}}, Checkpoint={{checkpoint}}, Ready for dev"
+        python3 {project-root}/src/core/workflows/tools/store-chat-memory.py sm "story-enrichment" \
+          "Story {{story_key}} enriched: Key AC={{ac_summary}}, Checkpoint={{checkpoint}}, Ready for dev"
       </action>
 
       <check if="storage succeeds">

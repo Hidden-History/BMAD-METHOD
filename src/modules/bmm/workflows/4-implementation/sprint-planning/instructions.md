@@ -270,8 +270,8 @@ python3 {project-root}/src/core/workflows/tools/post-work-store.py sm SPRINT-1 0
 </action>
 
 <action>Execute chat memory storage:
-python3 {project-root}/src/core/workflows/tools/load-chat-context.py sm "sprint planning" \
-  --decision "Sprint organized for {{project_name}}: {{epic_count}} epics, {{story_count}} stories, Estimated time={{estimated_time}}"
+python3 {project-root}/src/core/workflows/tools/store-chat-memory.py sm "sprint-planning" \
+  "Sprint organized for {{project_name}}: {{epic_count}} epics, {{story_count}} stories, Estimated time={{estimated_time}}"
 </action>
 
 <check if="storage succeeds">
