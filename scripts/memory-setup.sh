@@ -254,6 +254,9 @@ else
 # BMAD Memory System Configuration
 # Created: $(date +%Y-%m-%d)
 
+# Docker Compose Project Name (stack name)
+COMPOSE_PROJECT_NAME=${PROJECT_ID}
+
 # Qdrant Connection
 QDRANT_URL=http://localhost:16350
 QDRANT_KNOWLEDGE_COLLECTION=bmad-knowledge
