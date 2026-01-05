@@ -185,8 +185,7 @@ print_info "Packages installed to: $INSTALL_PATH"
 
 print_header "📁 CREATING DIRECTORY STRUCTURE"
 
-# Create all required directories
-mkdir -p scripts/memory
+# Create monitoring directories (scripts/memory already exists in repo)
 mkdir -p monitoring/grafana/dashboards
 mkdir -p monitoring/prometheus
 
@@ -353,38 +352,28 @@ fi
 
 print_header "📊 CREATING COLLECTIONS"
 
-# Create collection creation script
-cat > scripts/memory/create-collections.py << 'PYEOF'
-#!/usr/bin/env python3
-"""Create all 3 Qdrant collections with proper configuration."""
+# Export PROJECT_ROOT for Python scripts (WSL compatibility)
+export PROJECT_ROOT
 
+# Run repository script with stdin to avoid WSL getcwd issues
+cd "$PROJECT_ROOT" && python3 << 'PYEOF'
 import os
 import sys
-from pathlib import Path
-
-# 2025 Best Practice: Use os.path.normpath(os.path.abspath(__file__))
-# This avoids Path.resolve() symlink issues and WSL getcwd() failures
-# Canonical approach per Python community research (Jan 2025)
-try:
-    # Primary method: __file__ with normalization (no symlink resolution)
-    script_path = Path(os.path.normpath(os.path.abspath(__file__)))
-    project_root = str(script_path.parent.parent)
-except (OSError, NameError):
-    # Fallback: sys.argv[0] if __file__ fails (rare but possible)
-    script_path = Path(os.path.normpath(os.path.abspath(sys.argv[0])))
-    project_root = str(script_path.parent.parent)
-
-sys.path.insert(0, os.path.join(project_root, "src", "core"))
-
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams
 from dotenv import load_dotenv
-from qdrant_client import QdrantClient, models
 
 # Load environment from project root
+project_root = os.environ.get('PROJECT_ROOT')
+if not project_root:
+    print("ERROR: PROJECT_ROOT not set")
+    sys.exit(1)
+
 env_path = os.path.join(project_root, '.env')
 if os.path.exists(env_path):
-    load_dotenv(env_path, override=True)  # Override shell environment
+    load_dotenv(env_path, override=True)
 
-# Connection
+# Connection settings
 QDRANT_URL = os.getenv('QDRANT_URL', 'http://localhost:16350')
 EMBEDDING_DIMENSION = int(os.getenv('EMBEDDING_DIMENSION', '384'))
 
@@ -393,39 +382,23 @@ client = QdrantClient(url=QDRANT_URL)
 
 # Collection definitions
 collections = [
-    {
-        'name': os.getenv('QDRANT_KNOWLEDGE_COLLECTION', 'bmad-knowledge'),
-        'description': 'Project-specific knowledge (7 types)'
-    },
-    {
-        'name': os.getenv('QDRANT_BEST_PRACTICES_COLLECTION', 'bmad-best-practices'),
-        'description': 'Universal best practices'
-    },
-    {
-        'name': os.getenv('QDRANT_AGENT_MEMORY_COLLECTION', 'agent-memory'),
-        'description': 'Agent conversation history'
-    }
+    {'name': os.getenv('QDRANT_KNOWLEDGE_COLLECTION', 'bmad-knowledge'), 'desc': 'Project-specific knowledge'},
+    {'name': os.getenv('QDRANT_BEST_PRACTICES_COLLECTION', 'bmad-best-practices'), 'desc': 'Universal best practices'},
+    {'name': os.getenv('QDRANT_AGENT_MEMORY_COLLECTION', 'agent-memory'), 'desc': 'Agent conversation history'}
 ]
 
-# Create each collection
+# Create collections
 for col in collections:
     try:
-        # Check if exists
         existing = client.get_collections()
-        exists = any(c.name == col['name'] for c in existing.collections)
-
-        if exists:
+        if any(c.name == col['name'] for c in existing.collections):
             print(f"✓ Collection '{col['name']}' already exists")
         else:
-            # Create with vector config
             client.create_collection(
                 collection_name=col['name'],
-                vectors_config=models.VectorParams(
-                    size=EMBEDDING_DIMENSION,
-                    distance=models.Distance.COSINE
-                )
+                vectors_config=VectorParams(size=EMBEDDING_DIMENSION, distance=Distance.COSINE)
             )
-            print(f"✓ Created collection '{col['name']}' - {col['description']}")
+            print(f"✓ Created collection '{col['name']}' - {col['desc']}")
     except Exception as e:
         print(f"✗ Error with collection '{col['name']}': {e}")
         sys.exit(1)
@@ -433,38 +406,25 @@ for col in collections:
 print("\n✅ All collections ready!")
 PYEOF
 
-chmod +x scripts/memory/create-collections.py
-
-# Run with system Python (2026 best practice - no venv issues)
-python3 scripts/memory/create-collections.py
-
 # ========================================
 # HEALTH CHECK
 # ========================================
 
 print_header "🏥 HEALTH CHECK"
 
-cat > scripts/memory/health-check.py << 'PYHCEOF'
-#!/usr/bin/env python3
-"""Quick health check of memory system."""
-
+# Run health check via stdin with PROJECT_ROOT from environment
+cd "$PROJECT_ROOT" && python3 << 'PYHCEOF'
 import os
 import sys
-from pathlib import Path
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 
-# 2025 Best Practice: Use os.path.normpath(os.path.abspath(__file__))
-try:
-    script_path = Path(os.path.normpath(os.path.abspath(__file__)))
-    project_root = str(script_path.parent.parent)
-except (OSError, NameError):
-    script_path = Path(os.path.normpath(os.path.abspath(sys.argv[0])))
-    project_root = str(script_path.parent.parent)
-
-env_path = os.path.join(project_root, '.env')
-if os.path.exists(env_path):
-    load_dotenv(env_path, override=True)  # Override shell environment
+# Load environment
+project_root = os.environ.get('PROJECT_ROOT')
+if project_root:
+    env_path = os.path.join(project_root, '.env')
+    if os.path.exists(env_path):
+        load_dotenv(env_path, override=True)
 
 QDRANT_URL = os.getenv('QDRANT_URL', 'http://localhost:16350')
 
@@ -482,9 +442,6 @@ except Exception as e:
     print(f"❌ Health check failed: {e}")
     sys.exit(1)
 PYHCEOF
-
-chmod +x scripts/memory/health-check.py
-python3 scripts/memory/health-check.py
 
 # ========================================
 # INSTALL CLAUDE CODE HOOKS
@@ -527,7 +484,7 @@ echo "  • Streamlit:  http://localhost:18505 (if configured)"
 echo ""
 echo "Next steps:"
 echo "  1. View Qdrant dashboard: http://localhost:16350/dashboard"
-echo "  2. Check health: python3 scripts/memory/health-check.py"
+echo "  2. Check collections: curl http://localhost:16350/collections"
 echo "  3. Verify hooks: cat .claude/settings.json | grep -A 2 'hooks'"
 echo "  4. Start using BMAD workflows (hooks fire automatically)!"
 echo ""
