@@ -54,6 +54,7 @@ function print_info() {
 
 SKIP_DOCKER=false
 SKIP_SEED=false
+SKIP_HOOKS=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -65,9 +66,13 @@ while [[ $# -gt 0 ]]; do
             SKIP_SEED=true
             shift
             ;;
+        --skip-hooks)
+            SKIP_HOOKS=true
+            shift
+            ;;
         *)
             print_error "Unknown option: $1"
-            echo "Usage: $0 [--skip-docker] [--skip-seed]"
+            echo "Usage: $0 [--skip-docker] [--skip-seed] [--skip-hooks]"
             exit 1
             ;;
     esac
@@ -84,6 +89,7 @@ echo "  • Qdrant vector database"
 echo "  • Monitoring stack (Prometheus, Grafana, Streamlit)"
 echo "  • Python dependencies (system-wide, cross-platform)"
 echo "  • 3 memory collections"
+echo "  • Claude Code hooks (7 event-driven hooks)"
 echo "  • Seed best practices"
 echo ""
 
@@ -421,6 +427,31 @@ chmod +x scripts/memory/health-check.py
 python3 scripts/memory/health-check.py
 
 # ========================================
+# INSTALL CLAUDE CODE HOOKS
+# ========================================
+
+if [ "$SKIP_HOOKS" = false ]; then
+    print_header "🪝 INSTALLING CLAUDE CODE HOOKS"
+
+    # Check if hook installer exists
+    if [ -f scripts/memory/install-hooks.sh ]; then
+        echo "Installing 7 event-driven hooks for automatic memory integration..."
+        echo ""
+
+        # Run hook installer
+        bash scripts/memory/install-hooks.sh
+
+        print_success "Claude Code hooks installed"
+    else
+        print_warning "Hook installer not found (scripts/memory/install-hooks.sh)"
+        print_info "Hooks provide automatic memory integration but are optional"
+    fi
+else
+    print_warning "Skipping hook installation (--skip-hooks flag)"
+    print_info "To install hooks later: ./scripts/memory/install-hooks.sh"
+fi
+
+# ========================================
 # COMPLETION
 # ========================================
 
@@ -437,5 +468,11 @@ echo ""
 echo "Next steps:"
 echo "  1. View Qdrant dashboard: http://localhost:16350/dashboard"
 echo "  2. Check health: python3 scripts/memory/health-check.py"
-echo "  3. Start using memory in workflows!"
+echo "  3. Verify hooks: cat .claude/settings.json | grep -A 2 'hooks'"
+echo "  4. Start using BMAD workflows (hooks fire automatically)!"
+echo ""
+echo "Hook documentation:"
+echo "  • Hooks are in: .claude/hooks/"
+echo "  • Configured in: .claude/settings.json"
+echo "  • See hook output in stderr during execution"
 echo ""
