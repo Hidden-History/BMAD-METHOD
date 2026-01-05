@@ -276,7 +276,7 @@ Three collections store different types of knowledge:
 
 ```bash
 # Check if Qdrant is running
-curl http://localhost:6333/health
+curl http://localhost:16350/health
 
 # If not running, start it
 docker-compose up -d qdrant
@@ -332,11 +332,11 @@ python3 -c "from memory.agent_hooks import AgentMemoryHooks; hooks = AgentMemory
 
 ### Check Collections
 ```bash
-curl http://localhost:6333/collections
+curl http://localhost:16350/collections
 ```
 
 ### View Dashboard
-Open: http://localhost:6333/dashboard
+Open: http://localhost:16350/dashboard
 
 ---
 
@@ -365,7 +365,7 @@ Memory system reads from `.env`:
 PROJECT_ID=your-project-name
 
 # Qdrant connection
-QDRANT_URL=http://localhost:6333
+QDRANT_URL=http://localhost:16350
 QDRANT_API_KEY=
 
 # Collections
