@@ -259,6 +259,7 @@ COMPOSE_PROJECT_NAME=${PROJECT_ID}
 
 # Qdrant Connection
 QDRANT_URL=http://localhost:16350
+QDRANT_API_KEY=
 QDRANT_KNOWLEDGE_COLLECTION=bmad-knowledge
 QDRANT_BEST_PRACTICES_COLLECTION=bmad-best-practices
 QDRANT_AGENT_MEMORY_COLLECTION=agent-memory
@@ -371,7 +372,7 @@ from qdrant_client import QdrantClient, models
 # Load environment from project root
 env_path = os.path.join(project_root, '.env')
 if os.path.exists(env_path):
-    load_dotenv(env_path)
+    load_dotenv(env_path, override=True)  # Override shell environment
 
 # Connection
 QDRANT_URL = os.getenv('QDRANT_URL', 'http://localhost:16350')
@@ -446,7 +447,7 @@ from qdrant_client import QdrantClient
 project_root = os.getcwd()
 env_path = os.path.join(project_root, '.env')
 if os.path.exists(env_path):
-    load_dotenv(env_path)
+    load_dotenv(env_path, override=True)  # Override shell environment
 
 QDRANT_URL = os.getenv('QDRANT_URL', 'http://localhost:16350')
 
