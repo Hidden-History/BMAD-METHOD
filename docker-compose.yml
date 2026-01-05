@@ -25,8 +25,8 @@ services:
     image: qdrant/qdrant:latest
     container_name: bmad-qdrant
     ports:
-      - "16350:6333"   # REST API (changed from 6333 to avoid conflicts)
-      - "16351:6334"   # gRPC API (changed from 6334 to avoid conflicts)
+      - "16350:16350"   # REST API
+      - "16351:16351"   # gRPC API
     volumes:
       - qdrant_storage:/qdrant/storage
       - ./qdrant_config:/qdrant/config:ro  # Optional: custom configuration
@@ -34,8 +34,8 @@ services:
       # Logging level (INFO for production, DEBUG for development)
       - QDRANT__LOG_LEVEL=${QDRANT_LOG_LEVEL:-INFO}
       # Service configuration
-      - QDRANT__SERVICE__HTTP_PORT=6333
-      - QDRANT__SERVICE__GRPC_PORT=6334
+      - QDRANT__SERVICE__HTTP_PORT=16350
+      - QDRANT__SERVICE__GRPC_PORT=16351
       # Performance tuning (2025 best practices)
       - QDRANT__STORAGE__PERFORMANCE__MAX_SEARCH_THREADS=${QDRANT_MAX_SEARCH_THREADS:-0}
       # Security: Enable TLS for production (commented out for local dev)
@@ -151,9 +151,9 @@ services:
       - STREAMLIT_SERVER_ADDRESS=0.0.0.0
       - STREAMLIT_SERVER_HEADLESS=true
       - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
-      # Qdrant connection
-      - QDRANT_URL=http://qdrant:6333
-      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
+      # Qdrant connection (Docker service name)
+      - QDRANT_URL=http://qdrant:16350
+      - QDRANT_API_KEY=
       # Collection names
       - QDRANT_KNOWLEDGE_COLLECTION=${QDRANT_KNOWLEDGE_COLLECTION:-bmad-knowledge}
       - QDRANT_BEST_PRACTICES_COLLECTION=${QDRANT_BEST_PRACTICES_COLLECTION:-bmad-best-practices}
