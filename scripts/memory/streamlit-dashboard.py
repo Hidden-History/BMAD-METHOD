@@ -403,7 +403,7 @@ with metric_col1:
     - Architect: ≤1500 tokens
     - Developer: ≤1000 tokens
     - Scrum Master: ≤800 tokens
-    - Per-shard: ≤300 tokens
+    - Per-shard: ≤500 tokens
     """)
 
 with metric_col2:

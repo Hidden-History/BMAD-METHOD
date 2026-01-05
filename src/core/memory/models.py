@@ -39,12 +39,12 @@ ImportanceLevel = Literal["critical", "high", "medium", "low"]
 @dataclass
 class MemoryShard:
     """
-    Atomic memory unit (50-300 tokens).
+    Atomic memory unit (50-500 tokens).
     Optimized for token-efficient context retrieval.
     """
 
     # Core content
-    content: str  # 50-300 tokens
+    content: str  # 50-500 tokens
 
     # Metadata (required)
     unique_id: str
@@ -73,9 +73,9 @@ class MemoryShard:
             raise ValueError(
                 f"Content too short: ~{token_estimate:.0f} tokens (min 50)"
             )
-        if token_estimate > 300:
+        if token_estimate > 500:
             raise ValueError(
-                f"Content too long: ~{token_estimate:.0f} tokens (max 300)"
+                f"Content too long: ~{token_estimate:.0f} tokens (max 500)"
             )
 
         # Date format

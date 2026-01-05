@@ -25,7 +25,7 @@ The BMAD Memory System provides three types of persistent, searchable memory:
 
 **Key Features:**
 - 85% token savings through intelligent context retrieval
-- Atomic shard storage (≤300 tokens per shard)
+- Atomic shard storage (≤500 tokens per shard)
 - Agent-specific token budgets (800-1500 tokens)
 - Duplicate detection (exact + semantic)
 - File:line reference validation
@@ -250,7 +250,7 @@ Based on proven patterns from production use:
 | Quick Flow | 1000 | Barry agent needs workflow context |
 | Scrum Master | 800 | Needs story outcomes only |
 
-**Per-Shard Limit:** 300 tokens (HARD LIMIT)
+**Per-Shard Limit:** 500 tokens (HARD LIMIT)
 
 ### Port Configuration
 

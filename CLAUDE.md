@@ -209,10 +209,10 @@ print(f'\n💾 Stored error pattern: {shard_id[:8]}...')
 
 ### DON'T Include:
 
-❌ Vague descriptions - "implemented authentication"  
-❌ Code without context - snippets without file:line  
-❌ Problems without solutions - describe what worked  
-❌ Overly long content - max 300 tokens per shard  
+❌ Vague descriptions - "implemented authentication"
+❌ Code without context - snippets without file:line
+❌ Problems without solutions - describe what worked
+❌ Overly long content - max 500 tokens per shard  
 
 ---
 

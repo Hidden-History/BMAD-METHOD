@@ -89,7 +89,7 @@ def main():
 
     if len(args.content) > 1500:
         print(f"⚠️  WARNING: Content very long ({len(args.content)} chars)", file=sys.stderr)
-        print(f"   Consider breaking into multiple best practices (max 300 tokens recommended)", file=sys.stderr)
+        print(f"   Consider breaking into multiple best practices (max 500 tokens recommended)", file=sys.stderr)
 
     # Import memory system
     try:

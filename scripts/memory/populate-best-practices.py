@@ -120,7 +120,7 @@ Token Limits:
 - Quick Flow: 1000 (needs workflow context)
 - Scrum Master: 800 (needs story outcomes only)
 
-Per-shard limit: 300 tokens (HARD LIMIT)
+Per-shard limit: 500 tokens (HARD LIMIT)
 
 Results from BMAD Memory:
 - Context stays within budget

@@ -221,7 +221,7 @@ All wrapper scripts located in: `src/core/workflows/tools/`
    - Validation: `FILE_LINE_PATTERN` regex enforced
 
 2. **Token Limits**
-   - Per-shard: 50-300 tokens (enforced by `MemoryShard` model)
+   - Per-shard: 50-500 tokens (enforced by `MemoryShard` model)
    - Per-agent budget: See table below
 
 3. **Metadata Fields**

@@ -127,7 +127,7 @@ Subprocess Agents:    Python API (required)
 | quick-flow-solo-dev | 1000 | Barry agent needs workflow context |
 | sm | 800 | Needs story outcomes only |
 
-**Per-Shard Limit: 300 tokens (HARD LIMIT)**
+**Per-Shard Limit: 500 tokens (HARD LIMIT)**
 
 ### Enforcement
 
@@ -825,7 +825,7 @@ REQUIRED_SECTIONS = {
 
 - [ ] **Pattern 1**: Using wrapper script (for workflow integration)
 - [ ] **Pattern 2**: Both MCP and Python API available
-- [ ] **Pattern 3**: Token budget validated (<300 tokens per shard)
+- [ ] **Pattern 3**: Token budget validated (<500 tokens per shard)
 - [ ] **Pattern 4**: File:line references present (if required)
 - [ ] **Pattern 5**: Correct hook timing (Step 1.5 or 6.5)
 - [ ] **Pattern 6**: Search threshold ≥0.5 applied
@@ -854,7 +854,7 @@ REQUIRED_SECTIONS = {
 ```python
 # Pattern 3 violation: Token budget exceeded
 raise ValidationError(
-    "PATTERN 3 VIOLATION: Content exceeds 300 tokens per shard (estimated: 450). "
+    "PATTERN 3 VIOLATION: Content exceeds 500 tokens per shard (estimated: 450). "
     "Split into multiple shards or reduce content length."
 )
 

@@ -94,7 +94,7 @@ context: str = hooks.before_story_start(
 - Architect: 1500 tokens max
 - Developer: 1000 tokens max
 - Scrum Master: 800 tokens max
-- Per-shard: 300 tokens max
+- Per-shard: 500 tokens max
 
 **Score Threshold:** 0.5 (configurable)
 
@@ -150,7 +150,7 @@ shard_ids: list[str] = hooks.after_story_complete(
 - File:line references required (format: `path/file.ext:123` or `path/file.ext:89-145`)
 - Duplicate detection (exact + semantic >0.85)
 - Metadata validation (JSON schema)
-- Per-shard token limit (300 tokens)
+- Per-shard token limit (500 tokens)
 
 **Example:**
 ```python

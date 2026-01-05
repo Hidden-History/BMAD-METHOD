@@ -84,7 +84,7 @@ python3 src/core/workflows/tools/post-work-store.py \
 **Validation:**
 - Requires file:line references in `--what-built`
 - Minimum 50 tokens content
-- Maximum 300 tokens per shard
+- Maximum 500 tokens per shard
 
 ---
 
@@ -410,13 +410,13 @@ Memory retrieval respects agent-specific token limits:
 | Quick Flow | 1000 | Needs workflow context |
 | Scrum Master | 800 | Needs story outcomes only |
 
-**Per-shard limit:** 300 tokens (hard limit)
+**Per-shard limit:** 500 tokens (hard limit)
 
 **How it works:**
 1. Agent searches memory (e.g., Developer with 1000 token budget)
 2. Results ranked by relevance score
 3. Top results included until budget exhausted
-4. Each shard ≤ 300 tokens ensures multiple results fit
+4. Each shard ≤ 500 tokens ensures multiple results fit
 
 ---
 

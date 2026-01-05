@@ -446,7 +446,7 @@ rm .env
 ### Key Concepts
 
 - **Collections:** 3 separate memory stores (knowledge, best practices, chat)
-- **Shards:** Atomic memory units (~150-300 tokens each)
+- **Shards:** Atomic memory units (~150-500 tokens each)
 - **Embeddings:** Semantic vectors for similarity search (384 dimensions)
 - **Token Budgets:** Per-agent limits to prevent context overflow
 - **File:Line References:** Required format: `src/auth/jwt.js:1-85`
