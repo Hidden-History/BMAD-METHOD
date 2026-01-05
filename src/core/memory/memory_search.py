@@ -57,7 +57,12 @@ def search_memories(
     must_conditions = []
 
     # Use group_id from parameter or config
-    effective_group_id = group_id or config["group_id"]
+    # SPECIAL CASE: best_practices collection uses "universal" group_id
+    if collection_type == 'best_practices':
+        effective_group_id = group_id or "universal"
+    else:
+        effective_group_id = group_id or config["group_id"]
+
     must_conditions.append(
         FieldCondition(key="group_id", match=MatchValue(value=effective_group_id))
     )
