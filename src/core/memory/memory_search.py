@@ -1,13 +1,12 @@
 """Memory search and retrieval."""
 
-from .config import CollectionType, get_memory_config
+from .config import get_memory_config
 from .memory_store import get_client, get_embedding_model
 from .models import AgentName, ImportanceLevel, MemoryType, SearchResult
 
 
 def search_memories(
     query: str,
-    collection_type: CollectionType = "knowledge",
     group_id: str | None = None,
     agent: AgentName | None = None,
     memory_types: list[MemoryType] | None = None,
@@ -15,40 +14,53 @@ def search_memories(
     component: str | None = None,
     importance: list[ImportanceLevel] | None = None,
     limit: int = 3,
+    collection_type: str = "bmad_knowledge",
 ) -> list[SearchResult]:
     """
     Search BMAD memory with semantic query + filters.
 
     Args:
         query: Search query text
-        collection_type: Which collection to search (knowledge, best_practices, agent_memory)
-        group_id: Tenant ID (default: from PROJECT_ID in .env)
+        group_id: Tenant ID (default: from config)
         agent: Filter by agent name
         memory_types: Filter by memory types
         story_id: Filter by story ID
         component: Filter by component
         importance: Filter by importance levels
         limit: Max results (default: 3)
+        collection_type: Collection to search ('bmad_knowledge', 'agent_memory', 'best_practices')
 
     Returns:
         list[SearchResult]: Ranked search results
     """
+    import os
     # Lazy import to avoid blocking
     from qdrant_client.models import FieldCondition, Filter, MatchAny, MatchValue
 
     client = get_client()
     model = get_embedding_model()
-    config = get_memory_config(collection_type)
-
-    # Use group_id from config if not provided
-    if group_id is None:
-        group_id = config["group_id"]
+    config = get_memory_config()
 
     # Generate query embedding
     query_embedding = model.encode(query).tolist()
 
+    # Get collection name from environment
+    collection_map = {
+        "bmad_knowledge": os.getenv("QDRANT_KNOWLEDGE_COLLECTION", "bmad-knowledge"),
+        "agent_memory": os.getenv("QDRANT_AGENT_MEMORY_COLLECTION", "agent-memory"),
+        "best_practices": os.getenv("QDRANT_BEST_PRACTICES_COLLECTION", "bmad-best-practices"),
+    }
+
+    collection_name = collection_map.get(collection_type, os.getenv("QDRANT_KNOWLEDGE_COLLECTION", "bmad-knowledge"))
+
     # Build filters
-    must_conditions = [FieldCondition(key="group_id", match=MatchValue(value=group_id))]
+    must_conditions = []
+
+    # Use group_id from parameter or config
+    effective_group_id = group_id or config["group_id"]
+    must_conditions.append(
+        FieldCondition(key="group_id", match=MatchValue(value=effective_group_id))
+    )
 
     if agent:
         must_conditions.append(
@@ -77,7 +89,7 @@ def search_memories(
 
     # Search using query_points (current Qdrant API)
     results = client.query_points(
-        collection_name=config["collection_name"],
+        collection_name=collection_name,
         query=query_embedding,
         query_filter=Filter(must=must_conditions) if must_conditions else None,
         limit=limit,

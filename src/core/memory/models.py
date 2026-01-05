@@ -6,23 +6,20 @@ from datetime import datetime
 from typing import Literal
 
 
-# Memory types for all 3 collections
+# Memory types from bmad-qdrant-memory-guide.md
 MemoryType = Literal[
-    # Knowledge collection (bmad-knowledge) - 7 types
     "architecture_decision",
-    "agent_spec",
     "story_outcome",
     "error_pattern",
-    "database_schema",
-    "config_pattern",
-    "integration_example",
-    # Best practices collection (bmad-best-practices) - 1 type
-    "best_practice",
-    # Agent memory collection (agent-memory) - 1 type
+    "requirement",
+    "implementation_detail",
+    "test_strategy",
+    "lesson_learned",
+    "decision_rationale",
     "chat_memory",
 ]
 
-# Agent names (from BMAD METHOD)
+# Agent names
 AgentName = Literal[
     "analyst",
     "architect",
@@ -51,7 +48,7 @@ class MemoryShard:
 
     # Metadata (required)
     unique_id: str
-    group_id: str  # Tenant isolation (e.g., PROJECT_ID from .env)
+    group_id: str  # Tenant isolation (e.g., "task-tracker-api")
     type: MemoryType
     agent: AgentName
     component: str

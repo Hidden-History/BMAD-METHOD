@@ -1,23 +1,10 @@
 """
 Agent memory hooks for BMAD workflow integration.
 Provides pre-work and post-work memory operations.
-
-Implements all 10 proven patterns from BMAD Memory:
-1. Wrapper Script Bridge - Python interface for BMAD workflows
-2. Dual Access - Works from both MCP and subprocess agents
-3. Token Budget Enforcement - Agent-specific limits
-4. File:Line References - Required in content (enforced in validation)
-5. Workflow Hook Timing - Pre-work (Step 1.5) and post-work (Step 6.5)
-6. Score Threshold 0.5 - Default minimum similarity
-7. Metadata Validation - Enforced in MemoryShard model
-8. Duplicate Detection - Implemented in validation layer
-9. Agent-Specific Memory Types - Filters by agent
-10. Code Snippets - Support 3-10 line snippets in content
 """
 
 from datetime import datetime
 
-from .config import CollectionType, get_memory_config
 from .memory_search import format_for_context, search_memories
 from .memory_store import store_batch, store_memory
 from .models import AgentName, MemoryShard
@@ -25,30 +12,19 @@ from .token_budget import get_optimal_context
 
 
 class AgentMemoryHooks:
-    """Memory hooks for BMAD agents (all 3 memory types)."""
+    """Memory hooks for BMAD agents."""
 
-    def __init__(
-        self,
-        agent: AgentName,
-        group_id: str | None = None,
-        collection_type: CollectionType = "knowledge",
-    ):
-        """Initialize memory hooks.
+    def __init__(self, agent: AgentName, group_id: str | None = None):
+        """
+        Initialize agent memory hooks.
 
         Args:
-            agent: Agent name (architect, dev, pm, etc.)
-            group_id: Project/tenant ID (default: from PROJECT_ID in .env)
-            collection_type: Which collection to use (knowledge, best_practices, agent_memory)
+            agent: Agent name
+            group_id: Project ID (defaults to PROJECT_ID env var)
         """
+        import os
         self.agent = agent
-        self.collection_type = collection_type
-
-        # Use group_id from .env if not provided
-        if group_id is None:
-            config = get_memory_config(collection_type)
-            group_id = config["group_id"]
-
-        self.group_id = group_id
+        self.group_id = group_id or os.getenv("PROJECT_ID", "bmad-project")
 
     # ========================================
     # PRE-WORK HOOKS (Search before starting)
@@ -58,10 +34,6 @@ class AgentMemoryHooks:
         """
         Search memory before starting story implementation.
 
-        Pattern 5: Workflow Hook Timing - Step 1.5 (pre-work)
-        Pattern 3: Token Budget Enforcement - Agent-specific limits
-        Pattern 6: Score Threshold 0.5 - Default minimum
-
         Args:
             story_id: Story ID (e.g., "2-23")
             feature: Feature description (2-5 keywords)
@@ -70,24 +42,23 @@ class AgentMemoryHooks:
             str: Formatted context for LLM
         """
         # Search 1: Similar story outcomes
+        # Include story_id for context (helps with related story discovery)
         story_results = search_memories(
             query=f"story {story_id} {feature} implementation",
-            collection_type=self.collection_type,
             group_id=self.group_id,
-            memory_types=["story_outcome"],
+            memory_types=["story_outcome", "implementation_detail"],
             limit=3,
         )
 
         # Search 2: Error patterns for this component
         error_results = search_memories(
             query=f"{story_id} error {feature}",
-            collection_type=self.collection_type,
             group_id=self.group_id,
             memory_types=["error_pattern"],
             limit=2,
         )
 
-        # Combine and apply token budget (Pattern 3)
+        # Combine and format
         all_results = story_results + error_results
         selected, tokens = get_optimal_context(self.agent, all_results)
 
@@ -97,40 +68,31 @@ class AgentMemoryHooks:
         """
         Search memory before making architecture decision.
 
-        Pattern 6: Higher threshold (0.7) for critical decisions
-
         Returns:
             str: Formatted context for LLM
         """
         results = search_memories(
             query=f"architecture {technology} {topic}",
-            collection_type=self.collection_type,
             group_id=self.group_id,
-            memory_types=["architecture_decision"],
+            memory_types=["architecture_decision", "decision_rationale"],
             limit=3,
         )
 
-        # Higher threshold for architecture (Pattern 6)
-        selected, tokens = get_optimal_context(
-            self.agent, results, include_score_threshold=0.7
-        )
+        selected, tokens = get_optimal_context(self.agent, results)
         return format_for_context(selected, max_tokens=tokens)
 
     def before_implementation(self, component: str, feature: str) -> str:
         """
         Search memory before implementing feature.
 
-        Pattern 9: Agent-specific memory filtering
-
         Returns:
             str: Formatted context for LLM
         """
         results = search_memories(
             query=f"implementation {component} {feature}",
-            collection_type=self.collection_type,
             group_id=self.group_id,
-            agent=self.agent,  # Pattern 9: Agent filtering
-            memory_types=["integration_example", "config_pattern"],
+            agent=self.agent,
+            memory_types=["implementation_detail", "test_strategy"],
             limit=3,
         )
 
@@ -153,11 +115,6 @@ class AgentMemoryHooks:
     ) -> list[str]:
         """
         Store memory shards after completing story.
-
-        Pattern 5: Workflow Hook Timing - Step 6.5 (post-work)
-        Pattern 4: File:Line References - Required in what_built
-        Pattern 7: Metadata Validation - Enforced in MemoryShard
-        Pattern 8: Duplicate Detection - Applied in validation layer
 
         Returns:
             list[str]: Shard IDs
@@ -199,7 +156,7 @@ class AgentMemoryHooks:
                 )
             )
 
-        return store_batch(shards, collection_type=self.collection_type)
+        return store_batch(shards)
 
     def after_architecture_decision(
         self,
@@ -212,8 +169,6 @@ class AgentMemoryHooks:
     ) -> str:
         """
         Store architecture decision after making it.
-
-        Pattern 4: File:Line References - Required in decision content
 
         Returns:
             str: Shard ID
@@ -230,7 +185,7 @@ class AgentMemoryHooks:
             created_at=datetime.now().isoformat(),
         )
 
-        return store_memory(shard, collection_type=self.collection_type)
+        return store_memory(shard)
 
     def after_bug_fix(
         self,
@@ -243,9 +198,6 @@ class AgentMemoryHooks:
     ) -> str:
         """
         Store error pattern after fixing bug.
-
-        Pattern 4: File:Line References - Required in solution content
-        Pattern 10: Code Snippets - Support 3-10 line snippets in solution
 
         Returns:
             str: Shard ID
@@ -262,4 +214,4 @@ class AgentMemoryHooks:
             created_at=datetime.now().isoformat(),
         )
 
-        return store_memory(shard, collection_type=self.collection_type)
+        return store_memory(shard)

@@ -3,8 +3,7 @@
 from .models import AgentName
 
 
-# Token budgets from BMAD Memory proven patterns (Problem 3)
-# Matches .env.example: AGENT_BUDGET_* values
+# Token budgets from bmad-qdrant-memory-guide.md
 AGENT_TOKEN_BUDGETS = {
     "architect": 1500,  # Highest - full architecture context
     "analyst": 1200,  # High - market/competitive context
@@ -39,7 +38,7 @@ def get_optimal_context(
     Args:
         agent: Agent name
         results: Search results
-        include_score_threshold: Minimum similarity score (Problem 6: 0.5 default)
+        include_score_threshold: Minimum similarity score
 
     Returns:
         tuple: (selected_results, total_tokens)
@@ -51,11 +50,11 @@ def get_optimal_context(
     total_tokens = 0
 
     for result in results[:max_memories]:
-        # Check score threshold (Problem 6: 0.5 minimum)
+        # Check score threshold
         if result.score < include_score_threshold:
             continue
 
-        # Estimate tokens (rough: 1 token ≈ 4 chars)
+        # Estimate tokens
         result_tokens = len(result.content) / 4
 
         if total_tokens + result_tokens > token_budget:

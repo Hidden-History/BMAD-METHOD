@@ -1,6 +1,6 @@
 """Memory storage functions."""
 
-from .config import CollectionType, get_memory_config
+from .config import get_memory_config
 from .models import MemoryShard
 
 
@@ -9,13 +9,7 @@ def get_client():
     from qdrant_client import QdrantClient
 
     config = get_memory_config()
-
-    # Handle empty API key (local Qdrant without auth)
-    api_key = config["qdrant_api_key"]
-    if api_key and api_key.strip():
-        return QdrantClient(url=config["qdrant_url"], api_key=api_key)
-    else:
-        return QdrantClient(url=config["qdrant_url"])
+    return QdrantClient(url=config["qdrant_url"], api_key=config["qdrant_api_key"])
 
 
 def get_embedding_model():
@@ -24,57 +18,76 @@ def get_embedding_model():
 
     # Cache model in function attribute
     if not hasattr(get_embedding_model, "_model"):
-        config = get_memory_config()
         get_embedding_model._model = SentenceTransformer(
-            config["embedding_model"]
+            "sentence-transformers/all-MiniLM-L6-v2"
         )
     return get_embedding_model._model
 
 
-def store_memory(shard: MemoryShard, collection_type: CollectionType = "knowledge") -> str:
+def store_memory(shard: MemoryShard, collection_type: str = "bmad_knowledge") -> str:
     """
     Store single memory shard.
 
     Args:
         shard: Memory shard to store
-        collection_type: Which collection to store in (knowledge, best_practices, agent_memory)
+        collection_type: Collection to store in ('bmad_knowledge', 'agent_memory', 'best_practices')
 
     Returns:
         str: Shard ID
     """
+    import os
+
     client = get_client()
     model = get_embedding_model()
-    config = get_memory_config(collection_type)
+
+    # Get collection name from environment
+    collection_map = {
+        "bmad_knowledge": os.getenv("QDRANT_KNOWLEDGE_COLLECTION", "bmad-knowledge"),
+        "agent_memory": os.getenv("QDRANT_AGENT_MEMORY_COLLECTION", "agent-memory"),
+        "best_practices": os.getenv("QDRANT_BEST_PRACTICES_COLLECTION", "bmad-best-practices"),
+    }
+
+    collection_name = collection_map.get(collection_type, os.getenv("QDRANT_KNOWLEDGE_COLLECTION", "bmad-knowledge"))
 
     # Generate embedding
     embedding = model.encode(shard.content).tolist()
 
     # Store
     client.upsert(
-        collection_name=config["collection_name"],
+        collection_name=collection_name,
         points=[{"id": shard.id, "vector": embedding, "payload": shard.to_payload()}],
     )
 
     return shard.id
 
 
-def store_batch(shards: list[MemoryShard], collection_type: CollectionType = "knowledge") -> list[str]:
+def store_batch(shards: list[MemoryShard], collection_type: str = "bmad_knowledge") -> list[str]:
     """
     Store multiple shards in batch.
 
     Args:
         shards: List of memory shards to store
-        collection_type: Which collection to store in (knowledge, best_practices, agent_memory)
+        collection_type: Collection to store in ('bmad_knowledge', 'agent_memory', 'best_practices')
 
     Returns:
         list[str]: List of shard IDs
     """
+    import os
+
     if not shards:
         return []
 
     client = get_client()
     model = get_embedding_model()
-    config = get_memory_config(collection_type)
+
+    # Get collection name from environment
+    collection_map = {
+        "bmad_knowledge": os.getenv("QDRANT_KNOWLEDGE_COLLECTION", "bmad-knowledge"),
+        "agent_memory": os.getenv("QDRANT_AGENT_MEMORY_COLLECTION", "agent-memory"),
+        "best_practices": os.getenv("QDRANT_BEST_PRACTICES_COLLECTION", "bmad-best-practices"),
+    }
+
+    collection_name = collection_map.get(collection_type, os.getenv("QDRANT_KNOWLEDGE_COLLECTION", "bmad-knowledge"))
 
     # Generate embeddings
     contents = [s.content for s in shards]
@@ -87,6 +100,6 @@ def store_batch(shards: list[MemoryShard], collection_type: CollectionType = "kn
     ]
 
     # Store batch
-    client.upsert(collection_name=config["collection_name"], points=points)
+    client.upsert(collection_name=collection_name, points=points)
 
     return [s.id for s in shards]

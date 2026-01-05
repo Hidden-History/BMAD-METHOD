@@ -1,4 +1,4 @@
-"""BMAD Memory System - Core Library."""
+"""BMAD Memory System."""
 
 from .memory_search import format_for_context, search_memories
 from .memory_store import store_batch, store_memory
