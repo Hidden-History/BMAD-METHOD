@@ -72,8 +72,7 @@ def main():
     # Initialize hooks for knowledge collection
     try:
         hooks = AgentMemoryHooks(
-            agent=agent,
-            collection_type="knowledge"
+            agent=agent
         )
     except Exception as e:
         print(f"ERROR: Failed to initialize memory hooks: {e}", file=sys.stderr)
