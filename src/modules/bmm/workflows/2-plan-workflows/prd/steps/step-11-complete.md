@@ -140,27 +140,39 @@ Perform final validation of the PRD:
 
 **💾 Pattern 5: Post-work Memory Storage - Store requirements patterns for future PM/Architect/Dev retrieval**
 
+<critical>YOU MUST EXECUTE these memory storage scripts using the Bash tool. Do not just read them - RUN them.</critical>
+
 After PRD completion and validation, store key patterns in both bmad-knowledge and agent-memory collections:
 
 #### A. Store Requirements Pattern (bmad-knowledge)
 
-<action>Extract requirements summary from PRD:
+**Step 1: Extract requirements summary from PRD:**
 - Count of functional requirements (from step-09)
 - Count of non-functional requirements (from step-10)
 - Key user journeys identified (from step-04)
 - Project type and domain (from step-07)
 - File:line references to PRD sections
-</action>
 
-<action>Execute bmad-knowledge storage:
+**Step 2: YOU MUST use the Bash tool to execute this script:**
+
+<action>
+MANDATORY: Use the Bash tool NOW to run this command.
+
+Command to execute:
+```bash
 python3 {project-root}/src/core/workflows/tools/post-work-store.py pm PRD-1 0 requirements \
   --what-built "PRD for {{project_name}} documented in {outputFile}:1-{{total_line_count}}. Executive Summary: lines {{summary_lines}}, Success Criteria: lines {{criteria_lines}}, Functional Requirements ({{fr_count}} total): lines {{fr_lines}}, Non-Functional Requirements ({{nfr_count}} total): lines {{nfr_lines}}" \
   --integration "Used by Architect for solution design, SM for epic breakdown, Dev for implementation context" \
   --errors "None" \
   --testing "PRD validated against success criteria template and user confirmation in step 11"
+```
+
+Do NOT proceed until you have executed this command using the Bash tool.
 </action>
 
-<check if="storage succeeds">
+**Step 3: Check execution result:**
+
+<check if="storage succeeds (exit code 0)">
   <output>💾 **PRD PATTERNS STORED IN MEMORY**
 
   Stored requirements pattern in bmad-knowledge collection:
@@ -176,11 +188,11 @@ python3 {project-root}/src/core/workflows/tools/post-work-store.py pm PRD-1 0 re
   </output>
 </check>
 
-<check if="storage fails">
+<check if="storage fails (exit code != 0)">
   <output>⚠️ **MEMORY STORAGE FAILED**
 
   PRD requirements could not be stored in memory.
-  Reason: {{error_reason}}
+  Reason: {{error_from_command_output}}
 
   **This does NOT affect PRD completion** - your PRD document is complete and ready.
 
@@ -190,19 +202,29 @@ python3 {project-root}/src/core/workflows/tools/post-work-store.py pm PRD-1 0 re
 
 #### B. Store Chat Memory (agent-memory)
 
-<action>Summarize key PM decisions from PRD workflow:
+**Step 1: Summarize key PM decisions from PRD workflow:**
 - Success criteria defined
 - Scope decision (MVP boundaries from step-03)
 - Key differentiator identified
 - Project type classification
-</action>
 
-<action>Execute chat memory storage:
+**Step 2: YOU MUST use the Bash tool to execute this script:**
+
+<action>
+MANDATORY: Use the Bash tool NOW to run this command.
+
+Command to execute:
+```bash
 python3 {project-root}/src/core/workflows/tools/store-chat-memory.py pm "prd-decisions" \
   "PRD for {{project_name}}: Success criteria={{criteria_summary}}, Scope={{scope_decision}}, Type={{project_type}}, Differentiator={{differentiator}}"
+```
+
+Do NOT proceed until you have executed this command using the Bash tool.
 </action>
 
-<check if="storage succeeds">
+**Step 3: Check execution result:**
+
+<check if="storage succeeds (exit code 0)">
   <output>💾 **PM DECISIONS STORED IN CHAT MEMORY**
 
   Stored key PRD decisions in agent-memory for future PM/Architect context.
