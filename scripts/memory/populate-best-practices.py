@@ -13,10 +13,10 @@ from dotenv import load_dotenv
 # Load environment
 env_path = Path(__file__).parent.parent.parent / '.env'
 if env_path.exists():
-    load_dotenv(env_path)
+    load_dotenv(env_path, override=True)
 
 try:
-    from memory import store_memory
+    from memory.memory_store import store_memory
     from memory.models import MemoryShard
     from datetime import datetime
 except ImportError as e:
@@ -161,7 +161,7 @@ def populate_seed():
                 collection_type="best_practices"
             )
 
-            print(f"✅ [{i}/{len(SEED_PRACTICES)}] {practice['pattern_name']}")
+            print(f"✅ [{i}/{len(SEED_PRACTICES)}] {practice['pattern_name']} (ID: {shard_id[:8]}...)")
             success_count += 1
 
         except Exception as e:
