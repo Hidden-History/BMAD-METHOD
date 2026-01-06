@@ -122,9 +122,30 @@ def extract_key_accomplishments(conversation):
     return unique[:5]  # Top 5 accomplishments
 
 
+def truncate_to_token_limit(text, max_tokens=1500):
+    """Truncate text to fit within token limit."""
+    # Estimate: 1 token ≈ 4 characters
+    max_chars = max_tokens * 4
+
+    if len(text) <= max_chars:
+        return text
+
+    # Truncate and add indicator
+    truncated = text[:max_chars - 50]  # Leave room for footer
+    return truncated + "\n\n... [truncated to fit token limit]"
+
+
 def create_session_summary(conversation_data):
     """Create summary of session before compaction."""
-    conversation_text = json.dumps(conversation_data)  # Convert to searchable text
+    # Extract message content only (avoid JSON structure artifacts)
+    if isinstance(conversation_data, list):
+        # conversation_data is list of message dicts
+        conversation_text = '\n'.join(
+            msg.get('content', '') for msg in conversation_data if msg.get('content')
+        )
+    else:
+        # Fallback: treat as string
+        conversation_text = str(conversation_data)
 
     # Extract key information
     files_modified = extract_files_modified(conversation_text)
@@ -143,7 +164,7 @@ def create_session_summary(conversation_data):
 
     if files_modified:
         summary_parts.append("**Files Modified:**")
-        for file in files_modified[:10]:  # Max 10 files
+        for file in files_modified[:20]:  # Max 20 files (more room now with 1500 token limit)
             summary_parts.append(f"- {file}")
         summary_parts.append("")
 
@@ -163,7 +184,38 @@ def create_session_summary(conversation_data):
     if not summary_parts:
         return None
 
-    return '\n'.join(summary_parts)
+    summary = '\n'.join(summary_parts)
+
+    # Ensure it fits within 1500 token limit
+    return truncate_to_token_limit(summary, max_tokens=1500)
+
+
+def load_transcript(transcript_path):
+    """Load conversation from JSONL transcript file."""
+    try:
+        import os
+        # Expand ~ to home directory
+        transcript_path = os.path.expanduser(transcript_path)
+
+        if not os.path.exists(transcript_path):
+            print(f"⚠️  Transcript file not found: {transcript_path}", file=sys.stderr)
+            return None
+
+        # Read JSONL file (each line is a JSON message)
+        messages = []
+        with open(transcript_path, 'r') as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        msg = json.loads(line)
+                        messages.append(msg)
+                    except json.JSONDecodeError:
+                        continue
+
+        return messages if messages else None
+    except Exception as e:
+        print(f"⚠️  Error loading transcript: {e}", file=sys.stderr)
+        return None
 
 
 def main():
@@ -171,27 +223,32 @@ def main():
         # Read hook input from stdin
         data = json.load(sys.stdin)
 
-        # PreCompact provides conversation context about to be compressed
-        conversation = data.get('conversation', {})
+        # PreCompact provides: transcript_path, trigger ("manual" or "auto")
+        transcript_path = data.get('transcript_path')
+        trigger = data.get('trigger', 'unknown')
 
-        if not conversation:
-            print("ℹ️  No conversation data to preserve", file=sys.stderr)
+        if not transcript_path:
+            print("ℹ️  No transcript path provided", file=sys.stderr)
             sys.exit(0)
 
         print(f"\n{'='*60}", file=sys.stderr)
         print(f"💾 PRE-COMPACTION CONTEXT PRESERVATION", file=sys.stderr)
+        print(f"Trigger: {trigger}", file=sys.stderr)
         print(f"{'='*60}", file=sys.stderr)
 
-        # Create session summary
-        summary = create_session_summary(conversation)
+        # Load conversation from transcript file
+        messages = load_transcript(transcript_path)
+        if not messages:
+            print("ℹ️  No conversation data to preserve", file=sys.stderr)
+            sys.exit(0)
+
+        # Create session summary (pass messages directly, not JSON)
+        summary = create_session_summary(messages)
 
         if not summary:
             print(f"\nℹ️  No significant context to preserve", file=sys.stderr)
             print(f"   (This is normal for short sessions)", file=sys.stderr)
             sys.exit(0)
-
-        print(f"\n✨ Extracted session summary:", file=sys.stderr)
-        print(f"{summary[:200]}...", file=sys.stderr)
 
         # Create memory shard
         project_id = os.getenv('PROJECT_ID', 'unknown-project')

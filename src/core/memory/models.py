@@ -17,6 +17,8 @@ MemoryType = Literal[
     "lesson_learned",
     "decision_rationale",
     "chat_memory",
+    "best_practice",      # Universal best practices from research
+    "session_summary",    # Pre-compaction session summaries
 ]
 
 # Agent names
@@ -39,12 +41,12 @@ ImportanceLevel = Literal["critical", "high", "medium", "low"]
 @dataclass
 class MemoryShard:
     """
-    Atomic memory unit (50-500 tokens).
+    Atomic memory unit (50-500 tokens, or 50-1500 for session summaries).
     Optimized for token-efficient context retrieval.
     """
 
     # Core content
-    content: str  # 50-500 tokens
+    content: str  # 50-500 tokens (50-1500 for session_summary)
 
     # Metadata (required)
     unique_id: str
@@ -69,13 +71,16 @@ class MemoryShard:
         char_count = len(self.content)
         token_estimate = char_count / 4
 
+        # Session summaries can be longer (up to 1500 tokens)
+        max_tokens = 1500 if self.type == "session_summary" else 500
+
         if token_estimate < 50:
             raise ValueError(
                 f"Content too short: ~{token_estimate:.0f} tokens (min 50)"
             )
-        if token_estimate > 500:
+        if token_estimate > max_tokens:
             raise ValueError(
-                f"Content too long: ~{token_estimate:.0f} tokens (max 500)"
+                f"Content too long: ~{token_estimate:.0f} tokens (max {max_tokens})"
             )
 
         # Date format
