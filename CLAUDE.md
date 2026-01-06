@@ -289,6 +289,20 @@ docker-compose up -d qdrant
 docker ps | grep qdrant
 ```
 
+### Hooks Not Firing After Git Pull
+
+**Problem:** After pulling updates, research_best_practices hook doesn't extract findings.
+
+**Cause:** `.claude/hooks/` is gitignored, so hook updates don't sync automatically.
+
+**Solution:** Run the sync script after pulling:
+
+```bash
+./scripts/sync-hooks.sh
+```
+
+This copies updated hooks from `templates/.claude/hooks/` to `.claude/hooks/`.
+
 ### "No module named 'memory'"
 
 ```bash
