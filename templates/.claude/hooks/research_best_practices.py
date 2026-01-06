@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.join(project_dir, 'src/core'))
 try:
     from memory.memory_store import store_memory
     from memory.models import MemoryShard
+    from memory.memory_search import search_memories
 except ImportError:
     # Graceful degradation if memory not installed
     print("⚠️  Memory system not installed, skipping research extraction", file=sys.stderr)
@@ -158,6 +159,39 @@ def truncate_practice(practice_text, max_chars=500):
     return truncated + "..."
 
 
+def is_duplicate(practice_content, similarity_threshold=0.8):
+    """
+    Check if practice already exists in DB using semantic search.
+
+    Args:
+        practice_content: The practice text to check
+        similarity_threshold: Score threshold for duplicate detection (default 0.8)
+
+    Returns:
+        bool: True if duplicate found (score >= threshold), False otherwise
+    """
+    try:
+        # Search best practices DB for similar content
+        results = search_memories(
+            query=practice_content,
+            collection_type='best_practices',
+            memory_types=['best_practice'],
+            limit=1  # Only need top match
+        )
+
+        if results and len(results) > 0:
+            top_score = results[0].score
+            if top_score >= similarity_threshold:
+                return True  # Duplicate found
+
+        return False  # No duplicate
+
+    except Exception as e:
+        # If search fails, assume not duplicate to avoid blocking storage
+        print(f"   ⚠️  Deduplication check failed: {e}", file=sys.stderr)
+        return False
+
+
 def main():
     try:
         # Read hook input from stdin
@@ -205,6 +239,11 @@ def main():
 
             print(f"\n{i}. Category: {category}", file=sys.stderr)
             print(f"   Preview: {truncated[:100]}...", file=sys.stderr)
+
+            # Check if practice already exists in DB (deduplication)
+            if is_duplicate(truncated, similarity_threshold=0.8):
+                print(f"   ⊘ Skipped: Already exists in DB (similarity >= 0.8)", file=sys.stderr)
+                continue
 
             # Create memory shard (universal, not project-specific)
             practice_hash = hashlib.sha256(truncated.encode()).hexdigest()[:16]

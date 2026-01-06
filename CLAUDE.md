@@ -358,38 +358,62 @@ Open: http://localhost:16350/dashboard
 
 ---
 
-## Automatic Best Practices Extraction (Hooks)
+## Best Practices: Search DB First, Then Internet
 
-BMAD Memory has **hooks** that automatically extract best practices from research sessions.
+**CRITICAL WORKFLOW:** Always search the best practices database BEFORE doing web research. Only research online for topics not already in the database.
 
-### How It Works
+### 1. Search Best Practices Database First
 
-**Hooks trigger automatically when you use research subagents:**
+```bash
+# Search the universal best practices collection
+cd "/mnt/e/projects/bmad-qdrant-mcp-knowledge-management/BMAD-METHOD" && \
+python3 src/core/workflows/tools/search-best-practices.py "FastAPI async patterns" --limit 5
+```
+
+**Why search first?**
+- Avoid duplicate research
+- Instant results (no web latency)
+- Pre-vetted practices from past projects
+- Consistent with project patterns
+
+### 2. Only Research Online If DB Has Nothing
+
+**Check the search results:**
+- ✅ If found 3+ relevant results (score >= 0.3) → **Use them, skip web research**
+- ⚠️ If found 0-2 results or low scores → **Research online for new information**
+
+### 3. Research Online (When Needed)
+
+**Use Task tool with Explore subagent** to trigger automatic extraction:
 
 ```python
-# ❌ WRONG - Direct MCP calls don't trigger hooks
-result = mcp_tool("firecrawl_search", {"query": "FastAPI best practices"})
-
-# ✅ CORRECT - Use Task tool to spawn research subagent
+# ✅ CORRECT - Triggers research_best_practices hook
 result = Task(
     subagent_type="Explore",
-    prompt="Research FastAPI best practices from 2026 documentation",
+    prompt="Research FastAPI best practices from 2026 documentation. Focus on async patterns, dependency injection, and testing.",
     description="Research FastAPI patterns"
 )
 ```
 
-**What happens:**
-1. You spawn an Explore/Research subagent using Task tool
-2. Subagent uses MCP tools (firecrawl, websearch) to gather information
-3. When subagent completes → **SubagentStop event fires**
-4. `research_best_practices.py` hook automatically:
+**❌ WRONG - Direct MCP calls don't trigger hooks:**
+```python
+# This won't extract best practices automatically
+result = mcp_tool("firecrawl_search", {"query": "FastAPI best practices"})
+```
+
+### 4. Hook Auto-Extracts New Practices
+
+When Explore subagent completes:
+1. **SubagentStop event fires**
+2. `research_best_practices.py` hook automatically:
    - Scans transcript for best practice patterns
-   - Extracts practices matching keywords (e.g., "best practice", "canonical way", "industry standard")
-   - Stores to `bmad-best-practices` collection with `group_id='universal'`
+   - Extracts practices with keywords ("best practice", "canonical way", "recommended pattern")
+   - **Deduplicates** against existing DB practices
+   - Stores only **NEW** practices to `bmad-best-practices` collection
 
-### Manual Storage (When Not Using Subagents)
+### Manual Storage (Fallback)
 
-If you do direct research without subagents, use the manual storage tool:
+If you must use direct MCP tools or copy-paste from browser:
 
 ```bash
 python src/core/workflows/tools/store-best-practices.py \
@@ -398,13 +422,24 @@ python src/core/workflows/tools/store-best-practices.py \
   --importance high
 ```
 
+### Complete Research Workflow
+
+```
+1. Search DB best practices → python3 search-best-practices.py "topic"
+2. If found (score >= 0.3) → Use retrieved practices ✅
+3. If not found → Use Task tool with Explore subagent 🔍
+4. Hook auto-extracts → Stores new practices to DB 💾
+5. Next search → Finds the new practices ♻️
+```
+
 ### When Hooks Trigger vs Manual Storage
 
-| Research Method | Hook Triggered? | Action Required |
-|-----------------|-----------------|-----------------|
-| Task tool with Explore/Research subagent | ✅ Yes (automatic) | None - extracts automatically |
-| Direct MCP tool calls (firecrawl, websearch) | ❌ No | Use manual `store-best-practices.py` |
-| Copy-paste from web browser | ❌ No | Use manual `store-best-practices.py` |
+| Research Method | Hook Triggered? | Extracts to DB? | Action Required |
+|-----------------|-----------------|-----------------|-----------------|
+| Task tool with Explore/Research subagent | ✅ Yes | ✅ Yes (auto) | None - fully automatic |
+| Direct MCP tool calls (firecrawl, websearch) | ❌ No | ❌ No | Manual `store-best-practices.py` |
+| Copy-paste from web browser | ❌ No | ❌ No | Manual `store-best-practices.py` |
+| Search DB with search-best-practices.py | N/A (read-only) | N/A | Returns existing practices |
 
 ---
 
