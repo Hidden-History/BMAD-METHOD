@@ -37,17 +37,13 @@ Set the agent name based on your current task:
 ```bash
 cd "/mnt/e/projects/bmad-qdrant-mcp-knowledge-management/BMAD-METHOD" && timeout 60 python3 -c "
 import sys
-import os
 sys.path.insert(0, 'src/core')
 
-from dotenv import load_dotenv
 from memory.agent_hooks import AgentMemoryHooks
 
-# Load environment variables from .env
-load_dotenv()
-
+# AgentMemoryHooks automatically loads PROJECT_ID from .env - no manual loading needed!
 # Set your agent name (see table above)
-hooks = AgentMemoryHooks(agent='dev', group_id=os.getenv('PROJECT_ID'))
+hooks = AgentMemoryHooks(agent='dev')
 
 # Extract 2-5 keywords from current task
 story_id = 'CURRENT-TASK'  # e.g., '2-23' or 'PRD-STEP-01'
@@ -69,7 +65,7 @@ else:
 
 **Replace these values:**
 - `agent='dev'` → Your agent name from table
-- `group_id` automatically loads from .env `PROJECT_ID` (e.g., 'task-tracker-api')
+- `group_id` is automatically loaded from .env `PROJECT_ID` (no need to pass it!)
 - `story_id` → Current task/story ID
 - `feature` → 2-5 keywords describing the task
 
@@ -108,16 +104,12 @@ Memory returns up to 3 relevant memories with:
 ```bash
 cd "/mnt/e/projects/bmad-qdrant-mcp-knowledge-management/BMAD-METHOD" && timeout 60 python3 -c "
 import sys
-import os
 sys.path.insert(0, 'src/core')
 
-from dotenv import load_dotenv
 from memory.agent_hooks import AgentMemoryHooks
 
-# Load environment variables from .env
-load_dotenv()
-
-hooks = AgentMemoryHooks(agent='dev', group_id=os.getenv('PROJECT_ID'))
+# AgentMemoryHooks automatically loads PROJECT_ID from .env
+hooks = AgentMemoryHooks(agent='dev')
 
 # CRITICAL: Include file:line + code snippets
 shard_ids = hooks.after_story_complete(
@@ -162,16 +154,12 @@ print(f'\n💾 Stored {len(shard_ids)} memory shards for future sessions')
 ```bash
 cd "/mnt/e/projects/bmad-qdrant-mcp-knowledge-management/BMAD-METHOD" && timeout 60 python3 -c "
 import sys
-import os
 sys.path.insert(0, 'src/core')
 
-from dotenv import load_dotenv
 from memory.agent_hooks import AgentMemoryHooks
 
-# Load environment variables from .env
-load_dotenv()
-
-hooks = AgentMemoryHooks(agent='architect', group_id=os.getenv('PROJECT_ID'))
+# AgentMemoryHooks automatically loads PROJECT_ID from .env
+hooks = AgentMemoryHooks(agent='architect')
 
 shard_id = hooks.after_architecture_decision(
     topic='authentication-strategy',
@@ -191,16 +179,12 @@ print(f'\n💾 Stored architecture decision: {shard_id[:8]}...')
 ```bash
 cd "/mnt/e/projects/bmad-qdrant-mcp-knowledge-management/BMAD-METHOD" && timeout 60 python3 -c "
 import sys
-import os
 sys.path.insert(0, 'src/core')
 
-from dotenv import load_dotenv
 from memory.agent_hooks import AgentMemoryHooks
 
-# Load environment variables from .env
-load_dotenv()
-
-hooks = AgentMemoryHooks(agent='dev', group_id=os.getenv('PROJECT_ID'))
+# AgentMemoryHooks automatically loads PROJECT_ID from .env
+hooks = AgentMemoryHooks(agent='dev')
 
 shard_id = hooks.after_bug_fix(
     error='NoneType has no attribute encode',
@@ -342,12 +326,12 @@ This is normal for:
 
 ### Search Memory (Pre-Work)
 ```bash
-python3 -c "import os; from dotenv import load_dotenv; from memory.agent_hooks import AgentMemoryHooks; load_dotenv(); hooks = AgentMemoryHooks(agent='dev', group_id=os.getenv('PROJECT_ID')); print(hooks.before_story_start(story_id='2-17', feature='JWT auth'))"
+python3 -c "import sys; sys.path.insert(0, 'src/core'); from memory.agent_hooks import AgentMemoryHooks; hooks = AgentMemoryHooks(agent='dev'); print(hooks.before_story_start(story_id='2-17', feature='JWT auth'))"
 ```
 
 ### Store Outcome (Post-Work)
 ```bash
-python3 -c "import os; from dotenv import load_dotenv; from memory.agent_hooks import AgentMemoryHooks; load_dotenv(); hooks = AgentMemoryHooks(agent='dev', group_id=os.getenv('PROJECT_ID')); hooks.after_story_complete(...)"
+python3 -c "import sys; sys.path.insert(0, 'src/core'); from memory.agent_hooks import AgentMemoryHooks; hooks = AgentMemoryHooks(agent='dev'); hooks.after_story_complete(...)"
 ```
 
 ### Check Collections
