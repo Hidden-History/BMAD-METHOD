@@ -344,6 +344,56 @@ Open: http://localhost:16350/dashboard
 
 ---
 
+## Automatic Best Practices Extraction (Hooks)
+
+BMAD Memory has **hooks** that automatically extract best practices from research sessions.
+
+### How It Works
+
+**Hooks trigger automatically when you use research subagents:**
+
+```python
+# ❌ WRONG - Direct MCP calls don't trigger hooks
+result = mcp_tool("firecrawl_search", {"query": "FastAPI best practices"})
+
+# ✅ CORRECT - Use Task tool to spawn research subagent
+result = Task(
+    subagent_type="Explore",
+    prompt="Research FastAPI best practices from 2026 documentation",
+    description="Research FastAPI patterns"
+)
+```
+
+**What happens:**
+1. You spawn an Explore/Research subagent using Task tool
+2. Subagent uses MCP tools (firecrawl, websearch) to gather information
+3. When subagent completes → **SubagentStop event fires**
+4. `research_best_practices.py` hook automatically:
+   - Scans transcript for best practice patterns
+   - Extracts practices matching keywords (e.g., "best practice", "canonical way", "industry standard")
+   - Stores to `bmad-best-practices` collection with `group_id='universal'`
+
+### Manual Storage (When Not Using Subagents)
+
+If you do direct research without subagents, use the manual storage tool:
+
+```bash
+python src/core/workflows/tools/store-best-practices.py \
+  "FastAPI async pattern: Use async def for I/O-bound operations..." \
+  --category api-best-practices \
+  --importance high
+```
+
+### When Hooks Trigger vs Manual Storage
+
+| Research Method | Hook Triggered? | Action Required |
+|-----------------|-----------------|-----------------|
+| Task tool with Explore/Research subagent | ✅ Yes (automatic) | None - extracts automatically |
+| Direct MCP tool calls (firecrawl, websearch) | ❌ No | Use manual `store-best-practices.py` |
+| Copy-paste from web browser | ❌ No | Use manual `store-best-practices.py` |
+
+---
+
 ## Memory Integration Workflow
 
 **Standard agent workflow with memory:**
@@ -351,12 +401,13 @@ Open: http://localhost:16350/dashboard
 1. **Get task** → Identify agent role + feature keywords
 2. **Search memory** → Run pre-work Bash command (timeout 60)
 3. **Analyze context** → Review file:line, snippets, integration points
-4. **Implement** → Write code using retrieved patterns
-5. **Test** → Validate implementation
-6. **Store outcome** → Run post-work Bash command
-7. **Next task** → Repeat cycle
+4. **Research (optional)** → Use Task tool with Explore subagent (triggers hooks)
+5. **Implement** → Write code using retrieved patterns
+6. **Test** → Validate implementation
+7. **Store outcome** → Run post-work Bash command
+8. **Next task** → Repeat cycle
 
-**Key Principle:** Search BEFORE coding, store AFTER validating. Every session builds knowledge for future sessions.
+**Key Principle:** Search BEFORE coding, store AFTER validating. Use research subagents to automatically extract best practices. Every session builds knowledge for future sessions.
 
 ---
 
