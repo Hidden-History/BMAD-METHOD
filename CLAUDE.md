@@ -37,12 +37,17 @@ Set the agent name based on your current task:
 ```bash
 cd "/mnt/e/projects/bmad-qdrant-mcp-knowledge-management/BMAD-METHOD" && timeout 60 python3 -c "
 import sys
+import os
 sys.path.insert(0, 'src/core')
 
+from dotenv import load_dotenv
 from memory.agent_hooks import AgentMemoryHooks
 
+# Load environment variables from .env
+load_dotenv()
+
 # Set your agent name (see table above)
-hooks = AgentMemoryHooks(agent='dev', group_id='${PROJECT_ID}')
+hooks = AgentMemoryHooks(agent='dev', group_id=os.getenv('PROJECT_ID'))
 
 # Extract 2-5 keywords from current task
 story_id = 'CURRENT-TASK'  # e.g., '2-23' or 'PRD-STEP-01'
@@ -64,7 +69,7 @@ else:
 
 **Replace these values:**
 - `agent='dev'` → Your agent name from table
-- `group_id='${PROJECT_ID}'` → From .env file (e.g., 'task-tracker-api')
+- `group_id` automatically loads from .env `PROJECT_ID` (e.g., 'task-tracker-api')
 - `story_id` → Current task/story ID
 - `feature` → 2-5 keywords describing the task
 
@@ -103,18 +108,23 @@ Memory returns up to 3 relevant memories with:
 ```bash
 cd "/mnt/e/projects/bmad-qdrant-mcp-knowledge-management/BMAD-METHOD" && timeout 60 python3 -c "
 import sys
+import os
 sys.path.insert(0, 'src/core')
 
+from dotenv import load_dotenv
 from memory.agent_hooks import AgentMemoryHooks
 
-hooks = AgentMemoryHooks(agent='dev', group_id='${PROJECT_ID}')
+# Load environment variables from .env
+load_dotenv()
+
+hooks = AgentMemoryHooks(agent='dev', group_id=os.getenv('PROJECT_ID'))
 
 # CRITICAL: Include file:line + code snippets
 shard_ids = hooks.after_story_complete(
     story_id='2-17',  # Task/story ID
     epic_id='2',      # Epic ID
     component='authentication',  # Component modified
-    
+
     # What you built (MUST include file:line + code snippets)
     what_built='''JWT authentication with refresh tokens.
     File: src/auth/jwt.py:89-156
@@ -122,20 +132,20 @@ shard_ids = hooks.after_story_complete(
     Algorithm: HS256 with 15min access, 7day refresh tokens
     Storage: Redis for refresh token whitelist
     ''',
-    
+
     # Integration points
     integration_points='''Called by: API middleware (src/middleware/auth.py:23-45)
     Calls: Redis client (src/db/redis.py:12-34)
     Database: users table, refresh_tokens table
     ''',
-    
+
     # Errors encountered + solutions
     common_errors='''Error: Token validation fails after server restart
     Cause: JWT secret loaded from env but not persisted
     Solution: Store JWT_SECRET in .env, load via config.py
     Prevention: Add validation in startup script
     ''',
-    
+
     # Testing done
     testing='''Unit: test_jwt_manager.py (24 tests)
     Integration: test_auth_flow.py (12 tests)
@@ -152,11 +162,16 @@ print(f'\n💾 Stored {len(shard_ids)} memory shards for future sessions')
 ```bash
 cd "/mnt/e/projects/bmad-qdrant-mcp-knowledge-management/BMAD-METHOD" && timeout 60 python3 -c "
 import sys
+import os
 sys.path.insert(0, 'src/core')
 
+from dotenv import load_dotenv
 from memory.agent_hooks import AgentMemoryHooks
 
-hooks = AgentMemoryHooks(agent='architect', group_id='${PROJECT_ID}')
+# Load environment variables from .env
+load_dotenv()
+
+hooks = AgentMemoryHooks(agent='architect', group_id=os.getenv('PROJECT_ID'))
 
 shard_id = hooks.after_architecture_decision(
     topic='authentication-strategy',
@@ -176,11 +191,16 @@ print(f'\n💾 Stored architecture decision: {shard_id[:8]}...')
 ```bash
 cd "/mnt/e/projects/bmad-qdrant-mcp-knowledge-management/BMAD-METHOD" && timeout 60 python3 -c "
 import sys
+import os
 sys.path.insert(0, 'src/core')
 
+from dotenv import load_dotenv
 from memory.agent_hooks import AgentMemoryHooks
 
-hooks = AgentMemoryHooks(agent='dev', group_id='${PROJECT_ID}')
+# Load environment variables from .env
+load_dotenv()
+
+hooks = AgentMemoryHooks(agent='dev', group_id=os.getenv('PROJECT_ID'))
 
 shard_id = hooks.after_bug_fix(
     error='NoneType has no attribute encode',
@@ -322,12 +342,12 @@ This is normal for:
 
 ### Search Memory (Pre-Work)
 ```bash
-python3 -c "from memory.agent_hooks import AgentMemoryHooks; hooks = AgentMemoryHooks(agent='dev', group_id='project-id'); print(hooks.before_story_start(story_id='2-17', feature='JWT auth'))"
+python3 -c "import os; from dotenv import load_dotenv; from memory.agent_hooks import AgentMemoryHooks; load_dotenv(); hooks = AgentMemoryHooks(agent='dev', group_id=os.getenv('PROJECT_ID')); print(hooks.before_story_start(story_id='2-17', feature='JWT auth'))"
 ```
 
 ### Store Outcome (Post-Work)
 ```bash
-python3 -c "from memory.agent_hooks import AgentMemoryHooks; hooks = AgentMemoryHooks(agent='dev', group_id='project-id'); hooks.after_story_complete(...)"
+python3 -c "import os; from dotenv import load_dotenv; from memory.agent_hooks import AgentMemoryHooks; load_dotenv(); hooks = AgentMemoryHooks(agent='dev', group_id=os.getenv('PROJECT_ID')); hooks.after_story_complete(...)"
 ```
 
 ### Check Collections
