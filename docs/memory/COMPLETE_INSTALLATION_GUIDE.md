@@ -142,8 +142,9 @@ cd my-awesome-project
 ### Step 2: Install BMAD Method
 
 ```bash
-# Install BMAD v6 (recommended)
-npx bmad-method@alpha install
+# Install BMAD v6 (MUST USE THIS COPY)
+git clone -b feature/qdrant-memory-foundation https://github.com/Hidden-History/BMAD-METHOD.git
+node tools/cli/bmad-cli.js install
 ```
 
 **What happens:**
