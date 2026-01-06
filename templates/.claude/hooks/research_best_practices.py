@@ -163,9 +163,10 @@ def main():
         # Read hook input from stdin
         data = json.load(sys.stdin)
 
-        agent_type = data.get('agent_type', '')
+        # SubagentStop hook provides: subagent_type, transcript (not agent_type, result)
+        agent_type = data.get('subagent_type', data.get('agent_type', ''))
         task_description = data.get('task_description', '')
-        result = data.get('result', '')
+        result = data.get('transcript', data.get('result', ''))
 
         # Only process research subagents
         if not is_research_agent(agent_type, task_description):
@@ -194,6 +195,13 @@ def main():
             # Categorize and truncate
             category = categorize_best_practice(practice)
             truncated = truncate_practice(practice)
+
+            # Check minimum token requirement (50 tokens = ~200 chars)
+            token_estimate = len(truncated) / 4
+            if token_estimate < 50:
+                print(f"\n{i}. Category: {category}", file=sys.stderr)
+                print(f"   ⚠️  Skipped: Too short (~{token_estimate:.0f} tokens, min 50)", file=sys.stderr)
+                continue
 
             print(f"\n{i}. Category: {category}", file=sys.stderr)
             print(f"   Preview: {truncated[:100]}...", file=sys.stderr)
