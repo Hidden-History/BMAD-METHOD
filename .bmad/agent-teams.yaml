@@ -1,0 +1,221 @@
+# .bmad/agent-teams.yaml
+# BMAD Agent Teams Configuration for Claude Code
+# Maps BMAD agents to Claude Code Agent Teams for parallel execution
+#
+# This config is PROJECT-SPECIFIC (user-space). BMAD framework lives in _bmad/.
+# Follows community direction: #1550, #1584, #1613
+#
+# Usage: /bmad-team-sprint <stage-name>
+
+# ─────────────────────────────────────────────
+# Global Settings
+# ─────────────────────────────────────────────
+
+global:
+  max_teammates: 5              # Hard cap per team (aligns with #1613)
+  default_model: "sonnet"       # Cost-effective default for workers (used when stage omits model field)
+  lead_model: "opus"            # Leads get more capable model (used when stage omits model field)
+  idle_timeout_minutes: 30      # Kill stuck teammates after this
+  max_session_cost_usd: 50.00   # Cost ceiling per team session
+  require_spawn_approval: true  # Show cost estimate, user must approve (HITL)
+  require_merge_approval: true  # User approves before merging results
+  write_authority: "single-writer"  # Lead owns shared state files
+
+# ─────────────────────────────────────────────
+# Context Paths
+# Resolved at runtime from _bmad/bmm/config.yaml
+# ─────────────────────────────────────────────
+
+context:
+  # Sprint tracking (lead reads/writes this) - optional: true
+  sprint_status: "{implementation_artifacts}/sprint-status.yaml"
+  # Project overview for lead context
+  project_context: "**/project-context.md"
+  # Architecture docs for dev context
+  architecture: "{planning_artifacts}/*architecture*.md"
+  # BMAD module config (resolves variables)
+  bmad_config: "{project-root}/_bmad/bmm/config.yaml"
+  # Epics and stories location
+  stories: "{planning_artifacts}/*stories*.md"
+
+# ─────────────────────────────────────────────
+# Team Stages
+# Each stage defines a team composition for a BMAD phase
+# ─────────────────────────────────────────────
+
+stages:
+
+  # ── Sprint Development ──────────────────────
+  # Parallel story implementation with code review
+  # Typical cost: $8-15 per session (2-3 stories)
+  sprint-dev:
+    description: "Parallel story implementation with code review"
+    max_teammates: 3
+    estimated_cost_range: "$8-15"
+    requires_sprint_status: true
+
+    lead:
+      bmad_agent: "sm"            # Bob - Scrum Master
+      model: "opus"
+      responsibilities:
+        - Read sprint-status.yaml and identify ready stories
+        - Assign stories to dev teammates
+        - Monitor progress via teammate messages
+        - Update sprint-status.yaml (single-writer)
+        - Spawn reviewer when dev completes a story
+        - Present summary to user for approval
+
+    teammates:
+      - role: "dev"
+        bmad_agent: "dev"         # Amelia - Developer
+        model: "sonnet"
+        slash_command: "/bmad-bmm-dev-story"
+        count: 2                  # 2 parallel developers
+        assignment: "story"       # Each gets one story
+        mode: "parallel"          # Work simultaneously
+        restrictions:
+          - Only modify files related to assigned story
+          - Do NOT modify sprint-status.yaml
+          - Report to lead only (no peer communication)
+
+      - role: "reviewer"
+        bmad_agent: "dev"         # Amelia (in review mode)
+        model: "opus"             # Opus for thorough review
+        slash_command: "/bmad-bmm-code-review"
+        count: 1
+        assignment: "completed-story"  # Reviews after dev finishes
+        mode: "sequential"        # Spawned after dev completes
+        restrictions:
+          - Read-only access to source code
+          - Write review notes only
+          - Do NOT modify implementation files
+
+  # ── Story Preparation ───────────────────────
+  # Parallel story creation from epics
+  # Typical cost: $5-10 per session
+  story-prep:
+    description: "Parallel story creation from epics"
+    max_teammates: 3
+    estimated_cost_range: "$5-10"
+    requires_sprint_status: true
+
+    lead:
+      bmad_agent: "sm"            # Bob - Scrum Master
+      model: "opus"
+      responsibilities:
+        - Read epics and identify stories to create
+        - Assign epic sections to story creators
+        - Review created stories for completeness
+        - Update sprint-status.yaml
+
+    teammates:
+      - role: "story-creator"
+        bmad_agent: "sm"          # Bob (in story creation mode)
+        model: "sonnet"
+        slash_command: "/bmad-bmm-create-story"
+        count: 3
+        assignment: "backlog-story"
+        mode: "parallel"
+        restrictions:
+          - Create story files only in planning artifacts
+          - Do NOT modify existing stories
+          - Do NOT modify sprint-status.yaml
+
+  # ── Test Automation ─────────────────────────
+  # Parallel test creation for completed stories
+  # Typical cost: $5-10 per session
+  test-automation:
+    description: "Parallel test creation for completed stories"
+    max_teammates: 2
+    estimated_cost_range: "$5-10"
+    requires_sprint_status: true
+
+    lead:
+      bmad_agent: "tea"           # Murat - Test Architect
+      model: "opus"
+      responsibilities:
+        - Identify completed stories needing tests
+        - Assign stories to QA teammates
+        - Review test coverage and quality
+        - Update sprint-status.yaml with test results
+
+    teammates:
+      - role: "qa"
+        bmad_agent: "quinn"       # Quinn - QA Engineer
+        model: "sonnet"
+        slash_command: "/bmad-bmm-qa-automate"
+        count: 2
+        assignment: "completed-story"
+        mode: "parallel"
+        restrictions:
+          - Create test files only
+          - Do NOT modify implementation source code
+          - Do NOT modify sprint-status.yaml
+
+  # ── Architecture Review ─────────────────────
+  # Architecture creation with analyst support
+  # Typical cost: $10-20 per session
+  architecture-review:
+    description: "Architecture creation with analyst pre-work"
+    max_teammates: 2
+    estimated_cost_range: "$10-20"
+    requires_sprint_status: false
+
+    lead:
+      bmad_agent: "architect"     # Winston - Architect
+      model: "opus"
+      responsibilities:
+        - Review analyst findings
+        - Create or update architecture document
+        - Validate technical decisions
+        - Present architecture for user approval
+
+    teammates:
+      - role: "analyst"
+        bmad_agent: "analyst"     # Mary - Business Analyst
+        model: "sonnet"
+        slash_command: "/bmad-agent-bmm-analyst"
+        count: 1
+        assignment: "research-brief"
+        mode: "sequential"        # Analyst finishes before architect starts deep work
+        restrictions:
+          - Research and analysis only
+          - Write findings to planning artifacts
+          - Do NOT make architectural decisions
+
+      - role: "ux-designer"
+        bmad_agent: "ux-designer" # Sally - UX Designer
+        model: "sonnet"
+        slash_command: "/bmad-bmm-create-ux-design"
+        count: 1
+        assignment: "ux-research"
+        mode: "parallel"          # UX research in parallel with analyst
+        restrictions:
+          - UX research and wireframes only
+          - Write to planning artifacts
+          - Do NOT make technical decisions
+
+# ─────────────────────────────────────────────
+# Quality Gates
+# Enforced by lead before accepting teammate work
+# ─────────────────────────────────────────────
+
+quality_gates:
+  story_completion:
+    require_all_tests_pass: true
+    require_code_review: true
+    require_acceptance_criteria_met: true
+
+  session_completion:
+    require_sprint_status_updated: true
+    require_human_approval: true    # User sees summary, approves
+
+# ─────────────────────────────────────────────
+# Communication Rules
+# ─────────────────────────────────────────────
+
+communication:
+  topology: "star"                # All teammates report to lead only
+  peer_communication: false       # No direct teammate-to-teammate messages
+  lead_reports_to: "user"         # Lead reports to human user
+  message_format: "structured"    # Teammates send: status, files, test results
