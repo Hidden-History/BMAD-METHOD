@@ -18,7 +18,7 @@ Traditional AI tools do the thinking for you, producing average results. BMad ag
 - **Structured Workflows**: Grounded in agile best practices across analysis, planning, architecture, and implementation
 - **Specialized Agents**: 12+ domain experts (PM, Architect, Developer, UX, Scrum Master, and more)
 - **Party Mode**: Bring multiple agent personas into one session to plan, troubleshoot, or discuss your project collaboratively, multiple perspectives with maximum fun
-- **Agent Teams** *(Claude Code)*: Spawn parallel teams of BMAD agents in tmux panes — implement multiple stories simultaneously, run test automation in parallel, or conduct architecture research with analyst support. See [How to Use Agent Teams](https://docs.bmad-method.org/how-to/use-agent-teams/)
+- **Agent Teams** *(Claude Code)*: Spawn parallel teams of BMAD agents in tmux panes — implement multiple stories simultaneously, run test automation in parallel, conduct architecture research with analyst support, or run parallel research streams. See [How to Use Agent Teams](https://docs.bmad-method.org/how-to/use-agent-teams/)
 - **Complete Lifecycle**: From brainstorming to deployment, BMad is there with you every step of the way
 
 ## Quick Start
