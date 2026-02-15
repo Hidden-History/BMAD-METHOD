@@ -1,6 +1,6 @@
 ---
 name: bmad-os-agent-teams
-description: "Orchestrates BMAD agent teams through Claude Code's Agent Teams API. Use when spawning parallel teams for sprint development, story preparation, test automation, or architecture review. Reads team compositions from .bmad/agent-teams.yaml, generates spawn prompts from agent manifest data, manages lifecycle with cost controls and HITL checkpoints."
+description: "Orchestrates BMAD agent teams through Claude Code's Agent Teams API. Use when spawning parallel teams for sprint development, story preparation, test automation, architecture review, or research. Reads team compositions from .bmad/agent-teams.yaml, validates prerequisites, generates spawn prompts from agent manifest data, and manages lifecycle with HITL checkpoints."
 license: MIT
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, TaskUpdate, TaskList, TeamCreate, TeamDelete, SendMessage, AskUserQuestion
 metadata:
@@ -26,8 +26,8 @@ Before using this skill:
 ```
 1. READ config          .bmad/agent-teams.yaml + agent-manifest.csv
 2. RESOLVE context      sprint-status.yaml + config.yaml variables
-3. ESTIMATE cost        team size x model x estimated turns
-4. PRESENT plan (HITL)  Show team composition + cost estimate to user
+3. VALIDATE prereqs     Check required files exist, warn on missing recommended
+4. PRESENT plan (HITL)  Show team composition + prerequisites status to user
 5. USER APPROVES        User must explicitly approve before spawning
 6. CREATE team          TeamCreate with team name
 7. CREATE tasks         TaskCreate for each story/assignment
@@ -49,6 +49,7 @@ The user invokes with a stage name:
 /bmad-team-sprint story-prep
 /bmad-team-sprint test-automation
 /bmad-team-sprint architecture-review
+/bmad-team-sprint research
 ```
 
 Read the config file and extract the requested stage:
@@ -78,37 +79,42 @@ Build a context summary for the lead's spawn prompt (max ~500 tokens):
 - Sprint status summary (stories ready, in-progress, done)
 - Files/directories relevant to assigned stories
 
-### Step 3: Cost Estimation
+### Step 3: Validate Prerequisites
 
-Estimate session cost before spawning:
+Check the stage's `prerequisites` section from the config:
 
-| Model | Cost per 1M input | Cost per 1M output | Est. per story |
-|-------|-------------------|--------------------|---|
-| claude-sonnet-4-5 | $3.00 | $15.00 | ~$2-4 |
-| claude-opus-4-6 | $15.00 | $75.00 | ~$8-15 |
+1. **Required files** (`required_files`): Glob for each pattern. If ANY required file is missing, show an error and do NOT proceed.
+2. **Recommended files** (`recommended_files`): Glob for each pattern. If missing, show a warning but allow proceeding.
+3. **Required modules** (`required_modules`): Check that the module directory exists under `_bmad/`. If missing, show an error and do NOT proceed.
 
-Formula:
+Present validation results:
 ```
-estimated_cost = sum(
-    teammate.model_cost_per_story * stories_assigned
-    for teammate in stage.teammates
-) + lead.model_cost * lead_overhead_factor
+Prerequisites for: {stage_name}
+
+✓ {file_pattern} — found: {resolved_path}
+✗ {file_pattern} — MISSING (required)
+⚠ {file_pattern} — not found (recommended, continuing)
+
+Status: Ready / Blocked
 ```
 
-**Note:** These are rough estimates. Claude Code does not expose actual token/cost metrics during a session. The lead should use the estimate as a guide, not a hard limit.
+If blocked, tell the user which BMAD workflows to run first to create the missing artifacts. For example:
+- Missing sprint-status.yaml → run `/bmad-bmm-sprint-planning`
+- Missing architecture doc → run `/bmad-bmm-create-architecture`
+- Missing PRD → run `/bmad-bmm-create-prd`
+- Missing project brief → run `/bmad-bmm-create-product-brief`
 
-Present to user:
+### Step 4: HITL Approval
+
+Present the team plan to the user:
 ```
-Team: sprint-dev
-Teammates: 2 devs (sonnet) + 1 reviewer (opus)
-Stories: 3 ready
-Estimated cost: $8-15
-Cost ceiling: $50.00 (from config)
+Team: {stage_name}
+Teammates: {team_composition_summary}
+Assignments: {assignment_summary}
+Prerequisites: All validated ✓
 
 Proceed? [Yes/No]
 ```
-
-### Step 4: HITL Approval
 
 Use AskUserQuestion to get explicit approval. Do NOT proceed without it.
 
@@ -139,9 +145,8 @@ Use the Task tool with the spawn prompt templates below. Each teammate gets:
 - `subagent_type`: "general-purpose" (full tool access for BMAD workflows)
 - `team_name`: The team created in Step 5
 - `name`: Role-based name (e.g., "dev-1", "dev-2", "reviewer")
-- `mode`: "default"
 
-**Permission modes:** By default teammates use standard permission mode (`default`). If BMAD workflows are blocked by permission prompts, the user can switch to `dontAsk` mode as a safer alternative that auto-approves but still logs actions. The `bypassPermissions` mode is also available but bypasses ALL safety checks including file deletion and bash execution confirmations — use only when explicitly requested by the user.
+**Permission modes:** All teammates inherit the lead's permission mode at spawn time — per-teammate modes cannot be set during spawning. If BMAD workflows are blocked by permission prompts, the user can change individual teammate modes after spawning, or restart with `dontAsk` mode as a safer alternative. The `bypassPermissions` mode bypasses ALL safety checks — use only when explicitly requested by the user.
 
 ## Spawn Prompt Templates
 
@@ -289,7 +294,7 @@ Output location: {planning_artifacts}/
 
 ## Instructions
 1. Run: {slash_command}
-2. Follow the BMAD analysis workflow
+2. Follow the BMAD technical research workflow to completion
 3. Document findings in planning artifacts
 4. When finished, send a message to "{lead_name}" with:
    - Status: completed
@@ -342,18 +347,56 @@ Project: {project_name}
 Project Root: {project_root}
 ```
 
+### Template: Researcher (market-researcher, domain-researcher, technical-researcher)
+
+```
+You are a BMAD research teammate. Your name is "{teammate_name}".
+
+## Your Assignment
+Research type: {research_type}
+Research scope: {research_scope}
+Output location: {planning_artifacts}/
+
+## Instructions
+1. Run: {slash_command}
+2. Follow the BMAD {research_type} research workflow to completion
+3. Document findings in planning artifacts
+4. When finished, send a message to "{lead_name}" with:
+   - Status: completed
+   - Research document path
+   - Key findings summary (3-5 bullets)
+   - Recommendations for next phase
+5. Mark your task as completed via TaskUpdate
+
+## Restrictions
+- Research and analysis only
+- Write findings to planning artifacts directory
+- Do NOT make product or architectural decisions
+- Report to lead only
+
+## Context
+Project: {project_name}
+Project Root: {project_root}
+```
+
 ### Template: Lead (all stages)
 
 ```
 You are the BMAD team lead for this {stage_name} session. Your name is "{lead_name}".
 
 ## Your Role
-You are the orchestrator. You do NOT implement stories. You:
+You are the orchestrator. You do NOT implement work yourself. You:
+
+Tip: Enable delegate mode (Shift+Tab) to restrict yourself to coordination-only tools. This prevents accidentally implementing tasks instead of delegating.
+
 1. Monitor teammate progress via their messages
-2. Update sprint-status.yaml when stories complete (YOU are the single writer)
-3. Spawn reviewer teammates when developers finish
+2. Update shared state files when work completes (YOU are the single writer)
+3. Spawn follow-up teammates when needed (e.g., reviewer after dev completes)
 4. Escalate blockers to the user
 5. Present a final summary when all work is done
+
+## Responsibilities
+{lead_responsibilities}
 
 ## Team Composition
 {team_composition_table}
@@ -361,20 +404,20 @@ You are the orchestrator. You do NOT implement stories. You:
 ## Task List
 {task_list_summary}
 
-## Sprint Status
-{sprint_status_content}
+## Context
+{context_summary}
 
 ## Instructions
 1. Wait for teammate messages
-2. When a dev reports completion:
-   a. Update sprint-status.yaml (mark story as "review")
-   b. If quality_gates.require_code_review is true, spawn a reviewer
-   c. Assign the reviewer to the completed story
-3. When a reviewer reports:
-   a. If approved: update sprint-status.yaml (mark story as "done")
-   b. If changes-requested: message the dev with findings
+2. When a teammate reports completion:
+   a. Validate the work against quality gates
+   b. Update shared state (sprint-status.yaml or equivalent)
+   c. If follow-up work is needed (e.g., code review), spawn the appropriate teammate
+3. When a teammate reports a blocker:
+   a. Attempt to resolve by providing context or reassigning
+   b. If unresolvable, escalate to user immediately
 4. When all work is done:
-   a. Update sprint-status.yaml with session summary
+   a. Update shared state with session summary
    b. Present final report to user via regular output
    c. Send shutdown_request to all teammates
    d. Call TeamDelete to clean up
@@ -382,12 +425,12 @@ You are the orchestrator. You do NOT implement stories. You:
 ## Quality Gates
 {quality_gates_section}
 
-## Cost Awareness
-This session's estimated budget is approximately ${max_session_cost_usd}. This is an advisory threshold — Claude Code does not expose runtime cost or token metrics. Monitor the scope of teammate work. If teammates are generating excessive output or taking many tool calls, consider pausing to reassess.
+## Scope Awareness
+Monitor the scope of teammate work. If teammates are generating excessive output, taking many tool calls, or drifting from their assignment, intervene early. Pause the session and escalate to the user if scope appears to be expanding beyond the original plan.
 
 ## Restrictions
-- You are the ONLY writer for sprint-status.yaml
-- Do NOT implement code yourself
+- You are the ONLY writer for shared state files
+- Do NOT implement work yourself
 - Do NOT bypass quality gates
 - Always present results to user before finalizing
 ```
@@ -404,27 +447,28 @@ When the lead receives a message from a teammate:
    - Story blocked: escalate to user
    - Review approved: mark story done
    - Review rejected: message dev with findings
+4. **If message is unclear**: Send a clarification request to the teammate asking for: status, files modified/created, test results, and any blockers. Do not update sprint-status.yaml until you have clear information.
 
 ## Shutdown Protocol
 
 1. Lead sends `shutdown_request` to each teammate
 2. Teammates respond with `shutdown_response` (approve: true)
-3. Lead calls `TeamDelete` to clean up team + task directories
-4. Lead presents final summary to user
+3. Clean up grace period state files: remove `/tmp/bmad_idle_{team_name}_*.json`
+4. Lead calls `TeamDelete` to clean up team + task directories
+5. Lead presents final summary to user
 
-## Cost Controls
+## Controls
 
 From `.bmad/agent-teams.yaml` global settings:
 
 | Control | Config Key | Action |
 |---------|-----------|--------|
-| Cost ceiling | max_session_cost_usd | Advisory threshold — lead should monitor scope and abort if exceeded |
-| Idle timeout | idle_timeout_minutes | Advisory — lead should manually check on teammates idle longer than this threshold |
 | Spawn approval | require_spawn_approval | HITL before any spawning |
 | Merge approval | require_merge_approval | HITL before accepting results |
 | Max teammates | max_teammates | Hard cap on concurrent agents |
+| Idle timeout | idle_timeout_minutes | Advisory — lead checks on stuck teammates |
 
-**Note:** `idle_timeout_minutes` and `max_session_cost_usd` are advisory thresholds for the lead to monitor. Claude Code does not expose runtime cost or duration metrics to hooks. The lead should use judgment to identify stuck teammates or escalating costs.
+**Note:** `idle_timeout_minutes` is an advisory threshold for the lead to monitor. Claude Code does not expose runtime duration metrics to hooks. The lead should use judgment to identify stuck teammates.
 
 ## Anti-Patterns
 
@@ -432,10 +476,10 @@ From `.bmad/agent-teams.yaml` global settings:
 |-------------|-------------|-----------------|
 | Teammates write sprint-status | Race conditions, corrupt state | Single-writer: lead only |
 | Peer-to-peer messaging | Context pollution, error amplification | Star topology: report to lead |
-| Spawning without HITL | Runaway costs | Always show estimate, get approval |
+| Spawning without HITL | Uncontrolled scope | Always present plan, get approval |
 | Full persona in spawn prompt | Token waste, context overflow | Teammates run BMAD slash commands |
 | Teammates prompt user for HITL | Blocks tmux pane | YOLO mode, HITL at lead level |
-| No idle timeout | Stuck agent burns budget | idle_timeout_minutes kills agents |
+| No idle timeout | Stuck agent wastes time | idle_timeout_minutes — lead monitors and intervenes |
 
 ## Validation Checklist
 
@@ -443,7 +487,7 @@ Before spawning a team:
 - [ ] .bmad/agent-teams.yaml exists and parses cleanly?
 - [ ] All bmad_agent names resolve in agent-manifest.csv?
 - [ ] Sprint-status.yaml exists and has ready stories?
-- [ ] Cost estimate calculated and shown to user?
+- [ ] Prerequisites validated (required files exist)?
 - [ ] User explicitly approved the spawn?
 - [ ] Team name is unique (includes timestamp)?
 - [ ] Each teammate has a distinct name?

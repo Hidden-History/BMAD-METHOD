@@ -18,7 +18,7 @@ Traditional AI tools do the thinking for you, producing average results. BMad ag
 - **Structured Workflows**: Grounded in agile best practices across analysis, planning, architecture, and implementation
 - **Specialized Agents**: 12+ domain experts (PM, Architect, Developer, UX, Scrum Master, and more)
 - **Party Mode**: Bring multiple agent personas into one session to plan, troubleshoot, or discuss your project collaboratively, multiple perspectives with maximum fun
-- **Agent Teams** *(Claude Code)*: Spawn parallel teams of BMAD agents in tmux panes — implement multiple stories simultaneously, run test automation in parallel, or conduct architecture research with analyst support. See [How to Use Agent Teams](http://docs.bmad-method.org/how-to/use-agent-teams/)
+- **Agent Teams** *(Claude Code)*: Spawn parallel teams of BMAD agents in tmux panes — implement multiple stories simultaneously, run test automation in parallel, or conduct architecture research with analyst support. See [How to Use Agent Teams](https://docs.bmad-method.org/how-to/use-agent-teams/)
 - **Complete Lifecycle**: From brainstorming to deployment, BMad is there with you every step of the way
 
 ## Quick Start
@@ -37,7 +37,7 @@ Follow the installer prompts, then open your AI IDE (Claude Code, Cursor, Windsu
 npx bmad-method install --directory /path/to/project --modules bmm --tools claude-code --yes
 ```
 
-See [Non-Interactive Installation Guide](http://docs.bmad-method.org/how-to/non-interactive-installation/) for all available options.
+See [Non-Interactive Installation Guide](https://docs.bmad-method.org/how-to/non-interactive-installation/) for all available options.
 
 > **Not sure what to do?** Run `/bmad-help` — it tells you exactly what's next and what's optional. You can also ask it questions like:
 
@@ -68,7 +68,7 @@ Products, platforms, complex features — structured planning then build:
 5. `/sprint-planning` — initialize sprint tracking
 6. **Repeat per story:** `/create-story` → `/dev-story` → `/code-review`
 
-Every step tells you what's next. Optional phases (brainstorming, research, UX design) are available when you need them — ask `/bmad-help` anytime. For a detailed walkthrough, see the [Getting Started Tutorial](http://docs.bmad-method.org/tutorials/getting-started/).
+Every step tells you what's next. Optional phases (brainstorming, research, UX design) are available when you need them — ask `/bmad-help` anytime. For a detailed walkthrough, see the [Getting Started Tutorial](https://docs.bmad-method.org/tutorials/getting-started/).
 
 ## Modules
 
@@ -115,12 +115,12 @@ BMad provides two testing options to fit your needs:
 
 ## Documentation
 
-**[BMad Documentation](http://docs.bmad-method.org)** — Tutorials, how-to guides, concepts, and reference
+**[BMad Documentation](https://docs.bmad-method.org)** — Tutorials, how-to guides, concepts, and reference
 **[Test Architect Documentation](https://bmad-code-org.github.io/bmad-method-test-architecture-enterprise/)** — TEA standalone module documentation
 
-- [Getting Started Tutorial](http://docs.bmad-method.org/tutorials/getting-started/)
-- [How to Use Agent Teams](http://docs.bmad-method.org/how-to/use-agent-teams/) — Parallel agent execution in Claude Code
-- [Upgrading from Previous Versions](http://docs.bmad-method.org/how-to/upgrade-to-v6/)
+- [Getting Started Tutorial](https://docs.bmad-method.org/tutorials/getting-started/)
+- [How to Use Agent Teams](https://docs.bmad-method.org/how-to/use-agent-teams/) — Parallel agent execution in Claude Code
+- [Upgrading from Previous Versions](https://docs.bmad-method.org/how-to/upgrade-to-v6/)
 - [Test Architect Migration Guide](https://bmad-code-org.github.io/bmad-method-test-architecture-enterprise/migration/) — Upgrading from BMM-embedded TEA
 
 ### For v4 Users

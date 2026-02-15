@@ -15,9 +15,8 @@ global:
   max_teammates: 5              # Hard cap per team (aligns with #1613)
   default_model: "sonnet"       # Cost-effective default for workers (used when stage omits model field)
   lead_model: "opus"            # Leads get more capable model (used when stage omits model field)
-  idle_timeout_minutes: 30      # Kill stuck teammates after this
-  max_session_cost_usd: 50.00   # Cost ceiling per team session
-  require_spawn_approval: true  # Show cost estimate, user must approve (HITL)
+  idle_timeout_minutes: 30      # Advisory — lead checks on stuck teammates
+  require_spawn_approval: true  # User must approve team composition (HITL)
   require_merge_approval: true  # User approves before merging results
   write_authority: "single-writer"  # Lead owns shared state files
 
@@ -47,12 +46,16 @@ stages:
 
   # ── Sprint Development ──────────────────────
   # Parallel story implementation with code review
-  # Typical cost: $8-15 per session (2-3 stories)
   sprint-dev:
     description: "Parallel story implementation with code review"
     max_teammates: 3
-    estimated_cost_range: "$8-15"
     requires_sprint_status: true
+    prerequisites:
+      required_files:
+        - "{implementation_artifacts}/sprint-status.yaml"
+        - "{planning_artifacts}/*architecture*.md"
+      recommended_files:
+        - "{planning_artifacts}/*stories*.md"
 
     lead:
       bmad_agent: "sm"            # Bob - Scrum Master
@@ -92,25 +95,29 @@ stages:
 
   # ── Story Preparation ───────────────────────
   # Parallel story creation from epics
-  # Typical cost: $5-10 per session
   story-prep:
     description: "Parallel story creation from epics"
     max_teammates: 3
-    estimated_cost_range: "$5-10"
     requires_sprint_status: true
+    prerequisites:
+      required_files:
+        - "{planning_artifacts}/*epics*.md"
+        - "{implementation_artifacts}/sprint-status.yaml"
+      recommended_files:
+        - "{planning_artifacts}/*prd*.md"
 
     lead:
-      bmad_agent: "sm"            # Bob - Scrum Master
+      bmad_agent: "pm"            # John - Product Manager (validates story quality against PRD)
       model: "opus"
       responsibilities:
         - Read epics and identify stories to create
         - Assign epic sections to story creators
-        - Review created stories for completeness
+        - Review created stories for quality and PRD alignment
         - Update sprint-status.yaml
 
     teammates:
       - role: "story-creator"
-        bmad_agent: "sm"          # Bob (in story creation mode)
+        bmad_agent: "sm"          # Bob - Scrum Master (runs create-story workflow)
         model: "sonnet"
         slash_command: "/bmad-bmm-create-story"
         count: 3
@@ -123,15 +130,20 @@ stages:
 
   # ── Test Automation ─────────────────────────
   # Parallel test creation for completed stories
-  # Typical cost: $5-10 per session
   test-automation:
     description: "Parallel test creation for completed stories"
     max_teammates: 2
-    estimated_cost_range: "$5-10"
     requires_sprint_status: true
+    prerequisites:
+      required_files:
+        - "{implementation_artifacts}/sprint-status.yaml"
+      recommended_files:
+        - "{planning_artifacts}/*stories*.md"
+      required_modules:
+        - "tea"
 
     lead:
-      bmad_agent: "tea"           # Murat - Test Architect
+      bmad_agent: "tea"           # Murat - Test Architect (REQUIRES TEA module addon)
       model: "opus"
       responsibilities:
         - Identify completed stories needing tests
@@ -141,7 +153,7 @@ stages:
 
     teammates:
       - role: "qa"
-        bmad_agent: "quinn"       # Quinn - QA Engineer
+        bmad_agent: "qa"          # Quinn - QA Engineer
         model: "sonnet"
         slash_command: "/bmad-bmm-qa-automate"
         count: 2
@@ -154,12 +166,16 @@ stages:
 
   # ── Architecture Review ─────────────────────
   # Architecture creation with analyst support
-  # Typical cost: $10-20 per session
   architecture-review:
     description: "Architecture creation with analyst pre-work"
     max_teammates: 2
-    estimated_cost_range: "$10-20"
     requires_sprint_status: false
+    prerequisites:
+      required_files:
+        - "{planning_artifacts}/*prd*.md"
+      recommended_files:
+        - "**/project-context.md"
+        - "{planning_artifacts}/*ux*.md"
 
     lead:
       bmad_agent: "architect"     # Winston - Architect
@@ -174,7 +190,7 @@ stages:
       - role: "analyst"
         bmad_agent: "analyst"     # Mary - Business Analyst
         model: "sonnet"
-        slash_command: "/bmad-agent-bmm-analyst"
+        slash_command: "/bmad-bmm-technical-research"
         count: 1
         assignment: "research-brief"
         mode: "sequential"        # Analyst finishes before architect starts deep work
@@ -194,6 +210,62 @@ stages:
           - UX research and wireframes only
           - Write to planning artifacts
           - Do NOT make technical decisions
+
+  # ── Research ───────────────────────────────
+  # Parallel research streams for Phase 1
+  research:
+    description: "Parallel market, domain, and technical research"
+    max_teammates: 3
+    requires_sprint_status: false
+    prerequisites:
+      recommended_files:
+        - "**/project-context.md"
+
+    lead:
+      bmad_agent: "analyst"       # Mary - Business Analyst (synthesizes research)
+      model: "opus"
+      responsibilities:
+        - Define research scope from project brief
+        - Assign research streams to teammates
+        - Synthesize findings into research summary
+        - Present findings for user approval
+
+    teammates:
+      - role: "market-researcher"
+        bmad_agent: "analyst"     # Mary (in market research mode)
+        model: "sonnet"
+        slash_command: "/bmad-bmm-market-research"
+        count: 1
+        assignment: "market-research"
+        mode: "parallel"
+        restrictions:
+          - Research and analysis only
+          - Write findings to planning artifacts
+          - Do NOT make product decisions
+
+      - role: "domain-researcher"
+        bmad_agent: "analyst"     # Mary (in domain research mode)
+        model: "sonnet"
+        slash_command: "/bmad-bmm-domain-research"
+        count: 1
+        assignment: "domain-research"
+        mode: "parallel"
+        restrictions:
+          - Research and analysis only
+          - Write findings to planning artifacts
+          - Do NOT make product decisions
+
+      - role: "technical-researcher"
+        bmad_agent: "analyst"     # Mary (in technical research mode)
+        model: "sonnet"
+        slash_command: "/bmad-bmm-technical-research"
+        count: 1
+        assignment: "technical-research"
+        mode: "parallel"
+        restrictions:
+          - Research and analysis only
+          - Write findings to planning artifacts
+          - Do NOT make architectural decisions
 
 # ─────────────────────────────────────────────
 # Quality Gates

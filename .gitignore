@@ -23,6 +23,7 @@ build/*.txt
 # System files
 .DS_Store
 Thumbs.db
+**/__pycache__/
 
 # Development tools and configs
 .prettierrc

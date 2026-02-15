@@ -1,6 +1,6 @@
 ---
 title: "How to Use Agent Teams"
-description: Spawn parallel teams of BMAD agents in Claude Code for sprint development, story preparation, test automation, and architecture review
+description: Spawn parallel teams of BMAD agents in Claude Code for sprint development, story preparation, test automation, architecture review, and research
 sidebar:
   order: 9
 ---
@@ -13,12 +13,13 @@ Use Claude Code's Agent Teams feature to run multiple BMAD agents in parallel. E
 - You need to create several stories from an epic simultaneously
 - You want parallel test creation across completed stories
 - You need architecture research with analyst and UX support working concurrently
+- You want to run market, domain, and technical research in parallel during Phase 1
 
 :::note[Prerequisites]
 - **Claude Code** v1.0.34+ with Agent Teams enabled
 - **BMAD** v6.0.0-Beta.4+ installed with slash commands available
-- **tmux** installed and available in PATH
-- **Claude Code must run inside tmux** (not VS Code terminal)
+- **tmux** recommended for split-pane visibility (each teammate gets its own pane)
+- **In-process mode** works in any terminal without tmux — teammates run inside your main terminal (use Shift+Up/Down to navigate between them)
 :::
 
 :::caution[Claude Code Only]
@@ -42,7 +43,7 @@ Add these settings to your Claude Code global settings (`~/.claude/settings.json
 
 ### 2. Choose a Stage
 
-Four pre-built team compositions are available in `.bmad/agent-teams.yaml`:
+Five pre-built team compositions are available in `.bmad/agent-teams.yaml`:
 
 | Stage | What It Does | Teammates |
 | ----- | ------------ | --------- |
@@ -50,6 +51,7 @@ Four pre-built team compositions are available in `.bmad/agent-teams.yaml`:
 | `story-prep` | Parallel story creation from epics | 3 story creators |
 | `test-automation` | Parallel test creation for completed stories | 2 QA engineers |
 | `architecture-review` | Architecture research with analyst support | 1 analyst + 1 UX designer |
+| `research` | Parallel Phase 1 research streams | 3 researchers |
 
 :::note[TEA Module Required]
 The `test-automation` stage uses the Test Architect (TEA) agent as lead. Install the [TEA module](https://bmad-code-org.github.io/bmad-method-test-architecture-enterprise/) before using this stage.
@@ -67,8 +69,8 @@ The orchestration skill walks you through a structured flow:
 
 1. **Config** — Reads `.bmad/agent-teams.yaml` and resolves project paths
 2. **Context** — Reads sprint-status.yaml to find ready stories (if required by the stage)
-3. **Cost estimate** — Calculates estimated cost based on team size and models
-4. **Your approval** — Presents the plan and waits for you to approve before spawning anything
+3. **Prerequisites** — Validates required BMAD artifacts exist (blocks if missing, warns if recommended files absent)
+4. **Your approval** — Presents the team plan and waits for you to approve before spawning anything
 5. **Team creation** — Creates the team and spawns each teammate in a separate tmux pane
 6. **Autonomous work** — Each teammate runs their assigned BMAD slash command (e.g., `/bmad-bmm-dev-story`)
 7. **Monitoring** — The lead receives messages from teammates and updates sprint-status.yaml
@@ -130,7 +132,8 @@ Lead Agent (Opus) ──── Reads sprint-status.yaml
 - **Star topology** — All teammates report to the lead only. No peer-to-peer messaging. This reduces error amplification compared to unstructured communication.
 - **Single-writer** — Only the lead writes sprint-status.yaml. Prevents race conditions when multiple agents work concurrently.
 - **BMAD slash commands** — Teammates load their full agent persona through BMAD's workflow engine, not from the spawn prompt. This keeps spawn prompts small and efficient.
-- **Human checkpoints** — You always see a cost estimate and approve before any agents spawn. You also approve the final results before the session closes.
+- **Human checkpoints** — You always see the team plan and approve before any agents spawn. You also approve the final results before the session closes.
+- **Delegate mode** — Press Shift+Tab after team creation to lock the lead into coordination-only mode. Prevents the lead from accidentally implementing tasks instead of delegating to teammates.
 
 ## Configuration
 
@@ -143,22 +146,32 @@ Edit `.bmad/agent-teams.yaml` to customize team compositions. See `.bmad/README-
 | `max_teammates` | 5 | Hard cap on concurrent agents |
 | `default_model` | sonnet | Model for worker agents |
 | `lead_model` | opus | Model for lead/reviewer agents |
-| `max_session_cost_usd` | 50.00 | Advisory cost ceiling per session |
 | `require_spawn_approval` | true | Require your approval before spawning |
 
-## Cost Estimates
+## Model Selection
 
-| Model | Input (per 1M tokens) | Output (per 1M tokens) | Per Story (est.) |
-| ----- | --------------------- | ---------------------- | ---------------- |
-| Sonnet | $3.00 | $15.00 | $2-4 |
-| Opus | $15.00 | $75.00 | $8-15 |
+| Model | Best For |
+| ----- | -------- |
+| Sonnet | Worker teammates (devs, story creators, researchers, QA) |
+| Opus | Lead agents and code reviewers |
 
-**Tips for managing costs:**
+**Tips for managing scope:**
 
 - Start with `sprint-dev` (3 teammates) before trying larger teams
 - Use Sonnet for development work, Opus only for review and orchestration
-- Set `max_session_cost_usd` to a comfortable limit
-- Monitor the lead's progress updates for early cost signals
+- Monitor the lead's progress updates for early scope signals
+
+### Research
+
+Best for: Phase 1 parallel research before creating the product brief.
+
+```text
+/bmad-team-sprint research
+```
+
+- 3 researchers work on market, domain, and technical research simultaneously
+- Analyst lead synthesizes findings into a research summary
+- Output feeds into product brief creation
 
 ## Troubleshooting
 

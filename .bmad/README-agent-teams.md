@@ -1,12 +1,12 @@
 # BMAD Agent Teams for Claude Code
 
-Bridge BMAD's 30 agents with Claude Code's native Agent Teams feature. Spawn parallel teams of BMAD agents in tmux panes for sprint development, story preparation, test automation, and architecture review.
+Bridge BMAD's 30 agents with Claude Code's native Agent Teams feature. Spawn parallel teams of BMAD agents in tmux panes for sprint development, story preparation, test automation, architecture review, and research.
 
 ## Prerequisites
 
 1. **Claude Code** v1.0.34+ with Agent Teams enabled
 2. **BMAD** v6.0.0-Beta.4+ installed with slash commands available
-3. **tmux** installed and available in PATH
+3. **tmux** recommended for split-pane mode (each teammate visible in its own pane). In-process mode works in any terminal without tmux.
 
 ## Quick Start
 
@@ -25,14 +25,15 @@ Add to your Claude Code global settings (`~/.claude/settings.json`):
 
 ### 2. Configure Teams
 
-The file `.bmad/agent-teams.yaml` in your project defines team compositions. It ships with 4 pre-built stages:
+The file `.bmad/agent-teams.yaml` in your project defines team compositions. It ships with 5 pre-built stages:
 
-| Stage | Description | Teammates | Est. Cost |
-|-------|-------------|-----------|-----------|
-| `sprint-dev` | Parallel story implementation + code review | 2 devs + 1 reviewer | $8-15 |
-| `story-prep` | Parallel story creation from epics | 3 story creators | $5-10 |
-| `test-automation` | Parallel test creation | 2 QA engineers | $5-10 |
-| `architecture-review` | Architecture with analyst support | 1 analyst + 1 UX designer | $10-20 |
+| Stage | Description | Teammates |
+|-------|-------------|-----------|
+| `sprint-dev` | Parallel story implementation + code review | 2 devs + 1 reviewer |
+| `story-prep` | Parallel story creation from epics | 3 story creators |
+| `test-automation` | Parallel test creation | 2 QA engineers |
+| `architecture-review` | Architecture with analyst support | 1 analyst + 1 UX designer |
+| `research` | Parallel Phase 1 research streams | 3 researchers |
 
 ### 3. Run a Team
 
@@ -41,8 +42,8 @@ The file `.bmad/agent-teams.yaml` in your project defines team compositions. It 
 ```
 
 This will:
-1. Read config and sprint-status.yaml
-2. Show you the team plan with cost estimate
+1. Read config and validate prerequisites
+2. Show you the team plan with prerequisites status
 3. Wait for your approval (you MUST approve before anything spawns)
 4. Create the team and spawn teammates in tmux panes
 5. Each teammate runs their assigned BMAD workflow
@@ -72,6 +73,22 @@ Lead Agent (Opus) ──── Reads sprint-status.yaml
 - **Single-writer**: Only the lead writes sprint-status.yaml. Prevents race conditions.
 - **YOLO mode**: Teammates run BMAD workflows without HITL prompts. Human checkpoints happen at the lead/user level.
 - **BMAD slash commands**: Teammates don't carry agent personas in their spawn prompts. They invoke BMAD slash commands natively, which loads the full persona via BMAD's workflow engine.
+- **Delegate mode**: After creating the team, press Shift+Tab to lock the lead into coordination-only mode. Prevents the lead from implementing tasks instead of delegating.
+
+### Display Modes
+
+┌──────────────────────┬────────────────┬─────────────────────────────────────────────────────────────────────────┐
+│         Mode         │    Requires    │                              How It Works                               │
+├──────────────────────┼────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ In-process (default) │ Any terminal   │ All teammates run in your main terminal. Use Shift+Up/Down to navigate. │
+├──────────────────────┼────────────────┼─────────────────────────────────────────────────────────────────────────┤
+│ Split panes          │ tmux or iTerm2 │ Each teammate gets its own pane. Click to interact directly.            │
+└──────────────────────┴────────────────┴─────────────────────────────────────────────────────────────────────────┘
+
+Set in `~/.claude/settings.json`:
+- `"teammateMode": "tmux"` — force split panes
+- `"teammateMode": "in-process"` — force in-process
+- `"teammateMode": "auto"` (default) — uses split panes if already in tmux, otherwise in-process
 
 ### Communication Flow
 
@@ -90,8 +107,7 @@ global:
   max_teammates: 5              # Hard cap (recommended: 3-5)
   default_model: "sonnet"       # Cost-effective for workers
   lead_model: "opus"            # More capable for orchestration
-  idle_timeout_minutes: 30      # Kill stuck teammates
-  max_session_cost_usd: 50.00   # Cost ceiling per session
+  idle_timeout_minutes: 30      # Advisory — lead checks on stuck teammates
   require_spawn_approval: true  # HITL before spawning
   require_merge_approval: true  # HITL before merging results
 ```
@@ -103,7 +119,11 @@ stages:
   my-stage:
     description: "What this stage does"
     max_teammates: 3
-    estimated_cost_range: "$5-15"
+    prerequisites:
+      required_files:
+        - "{planning_artifacts}/*relevant-artifact*.md"
+      recommended_files:
+        - "**/project-context.md"
     lead:
       bmad_agent: "sm"          # Must exist in agent-manifest.csv
       model: "opus"
@@ -181,28 +201,29 @@ Best for: Pre-sprint architecture work with research support.
 - UX Designer (Sally) explores user experience
 - Architect (Winston) synthesizes findings into architecture doc
 
-## Cost Management
+### Research
 
-### Estimates
+Best for: Phase 1 parallel research before creating the product brief.
 
-| Model | Input (per 1M tokens) | Output (per 1M tokens) | Per Story (est.) |
-|-------|----------------------|----------------------|------------------|
-| Sonnet | $3.00 | $15.00 | $2-4 |
-| Opus | $15.00 | $75.00 | $8-15 |
+```
+/bmad-team-sprint research
+```
 
-### Controls
+- 3 researchers work on market, domain, and technical research simultaneously
+- Analyst lead (Mary) synthesizes findings
+- Output feeds into product brief creation
 
-1. **Pre-spawn estimate**: You always see estimated cost before approving
-2. **Session ceiling**: `max_session_cost_usd` aborts if exceeded
-3. **Idle timeout**: `idle_timeout_minutes` kills stuck teammates
-4. **Model selection**: Use sonnet for workers, opus for leads/reviewers
+## Model Selection
 
-### Tips for Cost Control
+| Model | Best For | Notes |
+|-------|----------|-------|
+| Sonnet | Worker teammates (devs, story creators, researchers, QA) | Cost-effective, fast |
+| Opus | Lead agents, code reviewers | More capable for orchestration and review |
 
+**Tips:**
 - Start with `sprint-dev` (3 teammates) before trying larger teams
-- Use sonnet for development work, opus only for review/orchestration
-- Set `max_session_cost_usd` to a comfortable limit (default: $50)
-- Monitor the lead's progress updates for early cost signals
+- Use Sonnet for all worker roles, Opus only for leads and reviewers
+- Set `max_teammates` to a comfortable limit per stage
 
 ## Quality Gate Hooks
 
@@ -259,6 +280,40 @@ To activate these hooks, add the following to your project's `.claude/settings.j
 
 Note: Use relative paths from your project root. If using environment variables, ensure they are defined in your settings.json `env` section.
 
+## When to Use Teams vs Solo Workflows
+
+Not all BMAD workflows benefit from teams. Some are inherently sequential or require deep focused attention from a single agent.
+
+### Workflows That Benefit from Teams
+
+| Workflow | Stage | Why Teams Help |
+|----------|-------|---------------|
+| Market/Domain/Technical Research | `research` | 3 independent research streams run in parallel |
+| Architecture + Analyst + UX | `architecture-review` | Research feeds architecture decisions concurrently |
+| Story Creation from Epics | `story-prep` | Independent stories created in parallel |
+| Story Implementation | `sprint-dev` | Independent stories implemented in parallel |
+| Test Automation | `test-automation` | Independent test suites created in parallel |
+
+### Workflows Best Run Solo
+
+| Workflow | Why Solo |
+|----------|----------|
+| Brainstorming (CIS) | Creative ideation uses party mode, not structured teams |
+| Product Brief Creation | Single analyst synthesizes all research into one document |
+| PRD Creation | Single PM creates requirements from product brief |
+| UX Design | Single designer creates cohesive UX design |
+| Sprint Planning | Single SM plans sprint once, creates sprint-status.yaml |
+| Epics & Stories Creation | Single PM creates the epic structure |
+| Implementation Readiness Check | Single architect validates readiness |
+| Course Correction | Single SM adjusts sprint mid-flight |
+| Retrospective | Single SM runs retrospective |
+
+### Modules Not Covered by Teams
+
+- **CIS (Creative Ideation Suite)**: Uses BMAD party mode for collaborative brainstorming — not structured team stages
+- **GDS (Guided Design System)**: Separate design module, not part of development workflow
+- **BMB (BMAD Master Builder)**: Meta-level module for creating custom BMAD configurations
+
 ## Troubleshooting
 
 ### "Agent Teams not available"
@@ -276,10 +331,6 @@ The config expects sprint-status.yaml at `{implementation_artifacts}/sprint-stat
 ### Teammate stuck / not responding
 
 Check the tmux pane directly. If a teammate is stuck on a BMAD HITL prompt, they may need to run in a mode that auto-approves permissions. Set teammate `mode` to `dontAsk` in the skill spawn parameters. Note: `bypassPermissions` is stronger but bypasses ALL safety checks.
-
-### Cost exceeded
-
-If `max_session_cost_usd` is hit, the lead should abort the session. Lower the ceiling or reduce team size. You can also switch teammates from opus to sonnet.
 
 ### WSL filesystem issues
 
