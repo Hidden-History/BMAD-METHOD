@@ -52,7 +52,9 @@ _bmad-output
 .qwen
 .rovodev
 .kilocodemodes
-.claude/commands
+# .claude/commands/ is gitignored except tracked command files — add exceptions explicitly
+.claude/commands/*
+!.claude/commands/bmad-team-sprint.md
 .codex
 .github/chatmodes
 .github/agents
