@@ -1,5 +1,5 @@
 ---
-name: bmad-os-agent-teams
+name: bmad-agent-teams
 description: "Orchestrates BMAD agent teams through Claude Code's Agent Teams API. Use when spawning parallel teams for sprint development, story preparation, test automation, architecture review, or research. Reads team compositions from .bmad/agent-teams.yaml, validates prerequisites, generates spawn prompts from agent manifest data, and manages lifecycle with HITL checkpoints."
 license: MIT
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, TaskUpdate, TaskList, TeamCreate, TeamDelete, SendMessage, AskUserQuestion
@@ -147,6 +147,36 @@ Use the Task tool with the spawn prompt templates below. Each teammate gets:
 - `name`: Role-based name (e.g., "dev-1", "dev-2", "reviewer")
 
 **Permission modes:** All teammates inherit the lead's permission mode at spawn time — per-teammate modes cannot be set during spawning. If BMAD workflows are blocked by permission prompts, the user can change individual teammate modes after spawning, or restart with `dontAsk` mode as a safer alternative. The `bypassPermissions` mode bypasses ALL safety checks — use only when explicitly requested by the user.
+
+**Max teammates check:** Before spawning, count the total teammates for this stage (sum of all `count` fields). If the total exceeds the stage's `max_teammates` (or the global `max_teammates` if the stage doesn't specify one), show an error and do NOT proceed. Reduce the team size or ask the user to increase the limit.
+
+### Template Variable Resolution
+
+When building spawn prompts from templates, populate variables as follows:
+
+| Variable | Source | Used In |
+|----------|--------|---------|
+| `{stage_name}` | Stage key from agent-teams.yaml (e.g., `sprint-dev`) | Lead |
+| `{lead_name}` | Role-based: `{bmad_agent}-lead` (e.g., `sm-lead`, `pm-lead`) | Lead, all teammates |
+| `{lead_responsibilities}` | Stage `lead.responsibilities` array, formatted as numbered list | Lead |
+| `{team_composition_table}` | Built from stage `teammates` array: name, role, model, slash command | Lead |
+| `{task_list_summary}` | Output of TaskList after TaskCreate in Step 6 | Lead |
+| `{context_summary}` | Built in Step 2: project name, sprint status summary, relevant file paths (max ~500 tokens) | Lead |
+| `{quality_gates_section}` | `quality_gates` section from agent-teams.yaml, formatted as checklist | Lead |
+| `{teammate_name}` | Role-based: `{role}-{n}` (e.g., `dev-1`, `dev-2`, `qa-1`) | All teammates |
+| `{slash_command}` | Teammate's `slash_command` field from config | All teammates |
+| `{story_id}`, `{story_title}` | From sprint-status.yaml story entries | Dev, Reviewer, QA |
+| `{story_file_path}` | Resolved path to story file in planning artifacts | Dev, Reviewer, QA, Story Creator |
+| `{project_name}` | From `_bmad/bmm/config.yaml` | All |
+| `{project_root}` | Resolved project root directory | All |
+| `{planning_artifacts}` | From `_bmad/bmm/config.yaml`, resolved | Story Creator, Analyst, UX, Researcher |
+| `{research_type}` | One of: `market`, `domain`, `technical` | Researcher |
+| `{research_scope}` | Defined by lead based on project brief | Researcher |
+| `{files_modified_list}` | From dev's completion message to lead | Reviewer |
+| `{implementation_files_list}` | From sprint-status.yaml or dev completion message | QA |
+| `{backlog_item_id}`, `{epics_file_path}` | From sprint-status.yaml backlog entries | Story Creator |
+| `{research_topic}` | Defined by lead from architecture requirements | Analyst |
+| `{design_topic}` | Defined by lead from PRD/architecture requirements | UX Designer |
 
 ## Spawn Prompt Templates
 
@@ -453,7 +483,7 @@ When the lead receives a message from a teammate:
 
 1. Lead sends `shutdown_request` to each teammate
 2. Teammates respond with `shutdown_response` (approve: true)
-3. Clean up grace period state files: remove `/tmp/bmad_idle_{team_name}_*.json`
+3. Clean up grace period state files: remove `~/.claude/tmp/bmad_idle_{team_name}_*.json`
 4. Lead calls `TeamDelete` to clean up team + task directories
 5. Lead presents final summary to user
 

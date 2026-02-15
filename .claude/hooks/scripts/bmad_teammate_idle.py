@@ -65,7 +65,11 @@ def main():
 
         # Grace period logic to handle race conditions between task completion
         # and TaskUpdate being called
-        state_file = f"/tmp/bmad_idle_{team_name}_{teammate_name}.json"
+        safe_team = "".join(c for c in team_name if c.isalnum() or c in "-_")
+        safe_mate = "".join(c for c in teammate_name if c.isalnum() or c in "-_")
+        state_dir = os.path.expanduser("~/.claude/tmp")
+        os.makedirs(state_dir, exist_ok=True)
+        state_file = os.path.join(state_dir, f"bmad_idle_{safe_team}_{safe_mate}.json")
 
         if not has_incomplete:
             # No incomplete tasks - clean up state file and allow idle

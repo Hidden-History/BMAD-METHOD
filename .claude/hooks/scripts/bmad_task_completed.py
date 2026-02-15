@@ -43,10 +43,11 @@ def main():
 
     # ---- Skip reminder for the lead ----
     # The lead manages its own tasks and doesn't need reminders
-    # Use precise matching to avoid false positives like "misleader"
+    # Match common lead naming patterns: "lead", "team-lead", "lead-*", "*-lead"
     if teammate_name and (
         teammate_name.lower() in ("lead", "team-lead")
         or teammate_name.lower().startswith("lead-")
+        or teammate_name.lower().endswith("-lead")
     ):
         sys.exit(0)
 

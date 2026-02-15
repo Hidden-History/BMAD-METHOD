@@ -152,6 +152,32 @@ quality_gates:
     require_human_approval: true
 ```
 
+### Context Paths
+
+```yaml
+context:
+  sprint_status: "{implementation_artifacts}/sprint-status.yaml"
+  project_context: "**/project-context.md"
+  architecture: "{planning_artifacts}/*architecture*.md"
+  bmad_config: "{project-root}/_bmad/bmm/config.yaml"
+  stories: "{planning_artifacts}/*stories*.md"
+```
+
+Paths use BMAD config variables (resolved at runtime from `_bmad/bmm/config.yaml`). The lead reads these files for context when building spawn prompts.
+
+### Communication Rules
+
+```yaml
+communication:
+  topology: "star"              # All teammates report to lead only
+  peer_communication: false     # No direct teammate-to-teammate messages
+  lead_reports_to: "user"       # Lead reports to human user
+  message_format: "structured"  # Teammates send: status, files, test results
+```
+
+- `topology: "star"` — Enforced by spawn prompt restrictions. Reduces error amplification.
+- `write_authority: "single-writer"` — Set in global config. Only the lead writes shared state files (e.g., sprint-status.yaml).
+
 ## Team Composition Patterns
 
 ### Sprint Development (Recommended Starting Point)
@@ -197,9 +223,9 @@ Best for: Pre-sprint architecture work with research support.
 /bmad-team-sprint architecture-review
 ```
 
+- Architect (Winston) leads and synthesizes findings into architecture doc
 - Analyst (Mary) researches requirements
 - UX Designer (Sally) explores user experience
-- Architect (Winston) synthesizes findings into architecture doc
 
 ### Research
 
