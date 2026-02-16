@@ -56,12 +56,15 @@ stages:
         - "{planning_artifacts}/*architecture*.md"
       recommended_files:
         - "{planning_artifacts}/*stories*.md"
+        - "{implementation_artifacts}/team-parallel-groups.yaml"
 
     lead:
       bmad_agent: "sm"            # Bob - Scrum Master
       model: "opus"
       responsibilities:
         - Read sprint-status.yaml and identify ready stories
+        - Check team-parallel-groups.yaml — only assign stories from the same group
+        - Review cross-cutting concerns — coordinate shared patterns before workers start
         - Assign stories to dev teammates
         - Monitor progress via teammate messages
         - Update sprint-status.yaml (single-writer)
@@ -105,12 +108,14 @@ stages:
         - "{implementation_artifacts}/sprint-status.yaml"
       recommended_files:
         - "{planning_artifacts}/*prd*.md"
+        - "{implementation_artifacts}/team-parallel-groups.yaml"
 
     lead:
       bmad_agent: "pm"            # John - Product Manager (validates story quality against PRD)
       model: "opus"
       responsibilities:
         - Read epics and identify stories to create
+        - Check team-parallel-groups.yaml if present — respect story grouping order
         - Assign epic sections to story creators
         - Review created stories for quality and PRD alignment
         - Update sprint-status.yaml
@@ -139,6 +144,7 @@ stages:
         - "{implementation_artifacts}/sprint-status.yaml"
       recommended_files:
         - "{planning_artifacts}/*stories*.md"
+        - "{implementation_artifacts}/team-parallel-groups.yaml"
       required_modules:
         - "tea"
 
@@ -147,6 +153,7 @@ stages:
       model: "opus"
       responsibilities:
         - Identify completed stories needing tests
+        - Check team-parallel-groups.yaml if present — respect story grouping order
         - Assign stories to QA teammates
         - Review test coverage and quality
         - Update sprint-status.yaml with test results

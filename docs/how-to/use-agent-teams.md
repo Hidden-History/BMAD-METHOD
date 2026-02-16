@@ -57,6 +57,18 @@ Five pre-built team compositions are available in `.bmad/agent-teams.yaml`:
 The `test-automation` stage uses the Test Architect (TEA) agent as lead. Install the [TEA module](https://bmad-code-org.github.io/bmad-method-test-architecture-enterprise/) before using this stage.
 :::
 
+### 2.5 (Optional) Verify Story Dependencies
+
+For `sprint-dev`, `story-prep`, and `test-automation` stages, run dependency analysis first to determine which stories can safely execute in parallel:
+
+```text
+/bmad-team-verify
+```
+
+This analyzes story dependencies, file ownership conflicts, cross-cutting concerns, and producer-consumer contracts. It generates `team-parallel-groups.yaml` which the sprint command uses to constrain parallel assignments.
+
+If you skip this step, `/bmad-team-sprint` will warn and fall back to sequential (non-parallel) story assignment.
+
 ### 3. Run the Team
 
 Start Claude Code inside a tmux session, then invoke:
@@ -183,6 +195,9 @@ BMAD slash commands load from `.claude/commands/`, which is project-specific. En
 
 **Sprint-status.yaml not found**
 Run `/bmad-bmm-sprint-planning` first to create the sprint status file. The `architecture-review` stage does not require sprint-status.yaml.
+
+**Story-prep requires sprint-status.yaml**
+The `story-prep` stage requires sprint-status.yaml to track which backlog items need stories. Run `/bmad-bmm-sprint-planning` first to create it.
 
 **Teammate stuck or not responding**
 Check the tmux pane directly. If a teammate is stuck on a permission prompt, set the teammate `mode` to `dontAsk` in the skill spawn parameters. The `bypassPermissions` mode is stronger but bypasses all safety checks.

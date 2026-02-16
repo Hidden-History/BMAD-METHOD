@@ -30,6 +30,13 @@ def main():
     except Exception:
         sys.exit(0)  # Bad input -> allow idle
 
+    # Expected event schema (experimental Agent Teams API, may change):
+    # {
+    #   "hook_event_name": "TeammateIdle",
+    #   "teammate_name": "<string>",
+    #   "team_name": "<string>"
+    # }
+    # If schema changes, all .get() calls return empty strings -> exit 0 (fail-safe)
     hook_event = event.get("hook_event_name", "")
     if hook_event != "TeammateIdle":
         sys.exit(0)
@@ -47,9 +54,14 @@ def main():
 
     # ---- Check for in-progress tasks owned by this teammate ----
     try:
+        # ASSUMPTION: Claude Code stores tasks as JSON files at ~/.claude/tasks/{team_name}/*.json
+        # This is an undocumented internal path that may change. If this path changes,
+        # the hook will silently allow idle (fail-safe via exit 0 on all errors).
+        # If the tasks directory doesn't exist, log to stderr for operator visibility.
         tasks_dir = os.path.expanduser(f"~/.claude/tasks/{team_name}")
         if not os.path.isdir(tasks_dir):
-            sys.exit(0)  # No task directory -> allow idle
+            print(f"BMAD idle hook: tasks directory not found at {tasks_dir}", file=sys.stderr)
+            sys.exit(0)  # No task directory -> allow idle (fail-safe)
 
         has_incomplete = False
         for task_file in glob_mod.glob(os.path.join(tasks_dir, "*.json")):
@@ -91,6 +103,21 @@ def main():
                     state = json.load(f)
                 first_idle_time = state.get("first_idle_timestamp", current_time)
                 elapsed = current_time - first_idle_time
+
+                # Staleness check: if state file is older than 2x grace period,
+                # it's likely from a crashed session. Reset the grace period.
+                if elapsed > (grace_period_seconds * 2):
+                    try:
+                        os.remove(state_file)
+                    except Exception:
+                        pass
+                    # Reset: create fresh state file and allow idle
+                    try:
+                        with open(state_file, 'w') as f:
+                            json.dump({"first_idle_timestamp": current_time}, f)
+                    except Exception:
+                        pass
+                    sys.exit(0)
 
                 if elapsed < grace_period_seconds:
                     # Within grace period - allow idle

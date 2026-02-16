@@ -29,6 +29,14 @@ def main():
     except Exception:
         sys.exit(0)  # Bad input -> allow completion
 
+    # Expected event schema (experimental Agent Teams API, may change):
+    # {
+    #   "hook_event_name": "TaskCompleted",
+    #   "teammate_name": "<string>",
+    #   "team_name": "<string>",
+    #   "task_subject": "<string>"
+    # }
+    # If schema changes, all .get() calls return empty strings -> exit 0 (fail-safe)
     hook_event = event.get("hook_event_name", "")
     if hook_event != "TaskCompleted":
         sys.exit(0)

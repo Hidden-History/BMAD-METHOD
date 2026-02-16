@@ -340,6 +340,68 @@ Not all BMAD workflows benefit from teams. Some are inherently sequential or req
 - **GDS (Guided Design System)**: Separate design module, not part of development workflow
 - **BMB (BMAD Master Builder)**: Meta-level module for creating custom BMAD configurations
 
+## Dependency Verification
+
+Before running `/bmad-team-sprint` for stages that parallelize stories (sprint-dev, story-prep, test-automation), run the verify command to analyze story dependencies:
+
+```
+/bmad-team-verify
+```
+
+Note: The `architecture-review` and `research` stages do not require dependency verification because they assign work by role (analyst, UX designer, researcher types), not by story. There are no story-level dependencies to check for those stages.
+
+### What It Checks
+
+The verify command runs 5 checks adapted from agent team best practices:
+
+1. **Story Dependencies**: Analyzes acceptance criteria, descriptions, and story files for dependency signals (data models before UI, API before frontend, etc.)
+2. **File Ownership**: Identifies potential file conflicts between stories that would be parallelized — two stories modifying the same file cannot run safely in parallel
+3. **Cross-Cutting Concerns**: Identifies shared patterns (UI conventions, DB schema ordering, API formats) that need coordination between parallel workers
+4. **Producer-Consumer Contracts**: Maps which stories create outputs (tables, APIs, components) that other stories need — ensures producers run before consumers
+5. **Quality Gate**: Verifies the analysis itself is complete before generating the output file
+
+### Output
+
+Generates `{implementation_artifacts}/team-parallel-groups.yaml` with:
+- Stories grouped by epic, organized into parallel-safe groups
+- Groups numbered in execution order (group 1 before group 2)
+- Cross-epic dependency notes
+- Cross-cutting concern notes for the team lead
+
+Example:
+```yaml
+parallel_groups:
+  epic-1:
+    group-1:
+      stories:
+        - 1-1-user-authentication
+        - 1-2-account-management
+    group-2:
+      stories:
+        - 1-3-plant-data-model
+      depends_on: [group-1]
+```
+
+See the SKILL.md for the complete output format specification.
+
+### Usage
+
+```
+/bmad-team-verify                    # Analyze and generate groups
+# Review the output, edit if needed
+/bmad-team-sprint sprint-dev         # Uses groups for safe assignment
+```
+
+If `/bmad-team-sprint` is run without a parallel groups file, it will warn and fall back to sequential assignment (no parallelization).
+
+### Manual Editing
+
+The generated file is human-editable. If the analysis is incorrect (e.g., two stories flagged as dependent when they're actually independent), edit the YAML directly and re-run `/bmad-team-sprint`.
+
+### Backward Compatibility
+
+If the verify command and SKILL.md drift out of sync, the parallel groups file may not parse correctly — the sprint workflow will warn about an invalid file and fall back to sequential assignment. Always update both files together.
+
 ## Troubleshooting
 
 ### "Agent Teams not available"
@@ -368,8 +430,11 @@ On WSL with NTFS mounts, file creation can occasionally fail silently. If hooks 
 |------|---------|
 | `.bmad/agent-teams.yaml` | Team stage configurations |
 | `.bmad/README-agent-teams.md` | This documentation |
-| `.claude/skills/bmad-agent-teams/SKILL.md` | Orchestration skill (templates, flow, logic) |
-| `.claude/commands/bmad-team-sprint.md` | Slash command entry point |
+| `.claude/skills/bmad-agent-teams/SKILL.md` | Orchestration skill (mode selection, prerequisites, routing) |
+| `.claude/skills/bmad-agent-teams/verify-workflow.md` | Verify mode: 5-check dependency analysis workflow |
+| `.claude/skills/bmad-agent-teams/sprint-workflow.md` | Sprint mode: 13-step team orchestration, templates, controls |
+| `.claude/commands/bmad-team-sprint.md` | Slash command entry point (team spawn) |
+| `.claude/commands/bmad-team-verify.md` | Slash command entry point (dependency verification) |
 | `.claude/hooks/scripts/bmad_teammate_idle.py` | TeammateIdle quality gate |
 | `.claude/hooks/scripts/bmad_task_completed.py` | TaskCompleted quality gate |
 

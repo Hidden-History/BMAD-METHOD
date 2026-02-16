@@ -56,6 +56,7 @@ _bmad-output
 # .claude/commands/ is gitignored except tracked command files — add exceptions explicitly
 .claude/commands/*
 !.claude/commands/bmad-team-sprint.md
+!.claude/commands/bmad-team-verify.md
 .codex
 .github/chatmodes
 .github/agents
