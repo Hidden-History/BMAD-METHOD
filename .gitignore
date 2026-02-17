@@ -23,6 +23,7 @@ build/*.txt
 # System files
 .DS_Store
 Thumbs.db
+**/__pycache__/
 
 # Development tools and configs
 .prettierrc
@@ -52,7 +53,10 @@ _bmad-output
 .qwen
 .rovodev
 .kilocodemodes
-.claude/commands
+# .claude/commands/ is gitignored except tracked command files — add exceptions explicitly
+.claude/commands/*
+!.claude/commands/bmad-team-sprint.md
+!.claude/commands/bmad-team-verify.md
 .codex
 .github/chatmodes
 .github/agents
