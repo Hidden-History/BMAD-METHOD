@@ -39,6 +39,24 @@ Build a context summary for the lead's spawn prompt (max ~500 tokens):
 - Files/directories relevant to assigned stories
 - Parallel group info (current group, stories in group, completed groups) — if team-parallel-groups.yaml exists
 
+### Step 2.5: Detect Provider
+
+Check the active Claude Code environment to identify the model provider:
+
+1. Read the `ANTHROPIC_BASE_URL` environment variable (run `echo $ANTHROPIC_BASE_URL` via the Bash tool):
+   - Not set or `api.anthropic.com` → **Anthropic** (default)
+   - Contains `localhost:11434` → **Ollama Local** (local GPU models)
+   - Contains `ollama.com/api` → **Ollama Cloud** (cloud-hosted models, no local GPU)
+   - Contains `api.z.ai` → **GLM/Z.AI**
+   - Anything else → **Custom Anthropic-compatible API**
+
+2. Note for the HITL plan (Step 4):
+   - Provider name
+   - If non-Anthropic: "Note: Token counts are approximate, prompt caching unavailable"
+   - If Ollama local: "Note: Requires sufficient VRAM for the mapped models"
+
+This is **advisory only** — never block spawning based on provider. The user chose their provider deliberately.
+
 ### Step 3: Validate Prerequisites
 
 Check the stage's `prerequisites` section from the config:
@@ -109,6 +127,7 @@ For stages with `requires_sprint_status: true` (sprint-dev, story-prep, test-aut
 Present the team plan to the user:
 ```
 Team: {stage_name}
+Provider: {provider_name} ({base_url or "default"})
 Teammates: {team_composition_summary}
 
 Dependency Analysis:
@@ -161,6 +180,11 @@ Use the Task tool with the spawn prompt templates below. Each teammate gets:
 - `subagent_type`: "general-purpose" (full tool access for BMAD workflows)
 - `team_name`: The team created in Step 5
 - `name`: Role-based name (e.g., "dev-1", "dev-2", "reviewer")
+- `model`: From config using fallback chain:
+  1. Per-role `model` field from the stage definition in agent-teams.yaml
+  2. Global `lead_model` (for the lead) or `default_model` (for workers) from agent-teams.yaml
+  3. Claude Code default if neither is set
+  Valid values: "opus", "sonnet", "haiku"
 
 **Permission modes:** All teammates inherit the lead's permission mode at spawn time — per-teammate modes cannot be set during spawning. If BMAD workflows are blocked by permission prompts, the user can change individual teammate modes after spawning, or restart with `dontAsk` mode as a safer alternative. The `bypassPermissions` mode bypasses ALL safety checks — use only when explicitly requested by the user.
 
@@ -208,7 +232,7 @@ Project Root: {project_root}
 | qa | QA engineer | Test story: {story_id} - "{story_title}"<br>Story file: {story_file_path}<br>Impl files: {implementation_files_list} | - Test files created (paths)<br>- Tests passed/failed counts<br>- Coverage assessment | - Create test files only<br>- Do NOT modify implementation source code |
 | analyst | analyst | Research: {research_topic}<br>Output: {planning_artifacts}/ | - Research document path<br>- Key findings (3-5 bullets)<br>- Recommendations | - Research and analysis only<br>- Do NOT make architectural decisions |
 | ux-designer | UX designer | Design: {design_topic}<br>Output: {planning_artifacts}/ | - Design document paths<br>- Key UX decisions summary<br>- User flow descriptions | - UX research and wireframes only<br>- Do NOT make technical architecture decisions |
-| researcher | research | Type: {research_type}<br>Scope: {research_scope}<br>Output: {planning_artifacts}/ | - Research document path<br>- Key findings (3-5 bullets)<br>- Recommendations for next phase | - Research and analysis only<br>- Do NOT make product or architectural decisions |
+| researcher | researcher | Type: {research_type}<br>Scope: {research_scope}<br>Output: {planning_artifacts}/ | - Research document path<br>- Key findings (3-5 bullets)<br>- Recommendations for next phase | - Research and analysis only<br>- Do NOT make product or architectural decisions |
 
 ### Template: Lead (all stages)
 
@@ -326,7 +350,7 @@ From `.bmad/agent-teams.yaml` global settings:
 | Spawning without HITL | Present plan, get approval first |
 | Full persona in spawn prompt | Teammates run BMAD slash commands |
 | Teammates prompt user for HITL | YOLO mode; HITL at lead level only |
-| No idle monitoring | lead_model checks in on stuck teammates |
+| No idle monitoring | Lead checks in on stuck teammates |
 
 ## Pre-Spawn Checklist
 
@@ -336,4 +360,5 @@ From `.bmad/agent-teams.yaml` global settings:
 - [ ] Stories assigned from same parallel group only?
 - [ ] Cross-cutting concerns included in lead context?
 - [ ] Max teammates limit not exceeded?
+- [ ] Model tier resolved for each teammate from config? (per-role → global fallback)
 - [ ] User explicitly approved spawn plan? (Step 4)

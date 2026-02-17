@@ -105,8 +105,8 @@ Set in `~/.claude/settings.json`:
 ```yaml
 global:
   max_teammates: 5              # Hard cap (recommended: 3-5)
-  default_model: "sonnet"       # Cost-effective for workers
-  lead_model: "opus"            # More capable for orchestration
+  default_model: "sonnet"       # Default for workers (valid: opus, sonnet, haiku)
+  lead_model: "opus"            # Default for leads (valid: opus, sonnet, haiku)
   idle_timeout_minutes: 30      # Advisory — lead checks on stuck teammates
   require_spawn_approval: true  # HITL before spawning
   require_merge_approval: true  # HITL before merging results
@@ -243,13 +243,114 @@ Best for: Phase 1 parallel research before creating the product brief.
 
 | Model | Best For | Notes |
 |-------|----------|-------|
-| Sonnet | Worker teammates (devs, story creators, researchers, QA) | Cost-effective, fast |
-| Opus | Lead agents, code reviewers | More capable for orchestration and review |
+| Opus | Lead agents, code reviewers, complex analysis | Most capable — orchestration and review |
+| Sonnet | Worker teammates (devs, story creators, QA) | Cost-effective, fast, good balance |
+| Haiku | Research workers, simple story-prep | Most cost-effective — straightforward tasks only |
 
 **Tips:**
 - Start with `sprint-dev` (3 teammates) before trying larger teams
-- Use Sonnet for all worker roles, Opus only for leads and reviewers
+- Use Haiku for research stage workers, Sonnet for dev/QA workers, Opus for leads and reviewers
 - Set `max_teammates` to a comfortable limit per stage
+- Alternative providers (Ollama, GLM) map these tiers via environment variables — see Provider Configuration below
+
+## Provider Configuration
+
+BMAD Agent Teams uses Claude Code's model tier abstraction ("opus", "sonnet", "haiku"). These tier names map to actual models via environment variables, which means **any Anthropic-compatible API works** without changes to BMAD configuration.
+
+All teammates in a session share the same provider — you cannot mix providers per-teammate.
+
+### Anthropic (Default)
+
+No extra configuration needed. Claude Code uses Anthropic's API by default.
+
+```bash
+# Just needs your API key (set during `claude auth login`)
+# ANTHROPIC_API_KEY=sk-ant-...
+```
+
+| Tier | Model | Notes |
+|------|-------|-------|
+| opus | claude-opus-4-6 | Full capabilities — best for leads and reviewers |
+| sonnet | claude-sonnet-4-5 | Fast, capable — best for dev workers |
+| haiku | claude-haiku-4-5 | Fastest, cheapest — research and simple tasks |
+
+### Ollama (Local Models)
+
+Run models locally with Ollama's Anthropic-compatible API. Requires a local GPU (24GB+ VRAM for coding models).
+
+**Setup**: Install Ollama and start the server (`ollama serve`). Then set environment variables:
+
+```bash
+export ANTHROPIC_AUTH_TOKEN=ollama
+export ANTHROPIC_API_KEY=""
+export ANTHROPIC_BASE_URL=http://localhost:11434
+export ANTHROPIC_DEFAULT_OPUS_MODEL=qwen3-coder
+export ANTHROPIC_DEFAULT_SONNET_MODEL=qwen3-coder
+export ANTHROPIC_DEFAULT_HAIKU_MODEL=gpt-oss:20b
+```
+
+| Tier | Recommended Model | VRAM | Notes |
+|------|------------------|------|-------|
+| opus | qwen3-coder | 24GB+ | Strong coding model |
+| sonnet | qwen3-coder | 24GB+ | Same model (limited local tiering) |
+| haiku | gpt-oss:20b | 16GB+ | Lighter alternative |
+
+**Capabilities**: Tool calling, streaming, vision (base64 only), extended thinking (basic). No prompt caching, no `tool_choice`, approximate token counts.
+
+### Ollama Cloud (No Local GPU)
+
+Use cloud models through Ollama's cloud API without requiring local GPU hardware. Requires an Ollama account with API access.
+
+```bash
+export ANTHROPIC_BASE_URL=https://ollama.com/api
+export ANTHROPIC_AUTH_TOKEN=<your_ollama_api_key>
+# Example: launch with a specific cloud model
+# claude --model glm-5:cloud
+```
+
+| Tier | Model | Notes |
+|------|-------|-------|
+| opus | glm-5:cloud | Most capable cloud model |
+| sonnet | glm-4.7:cloud | High-performance, cost-effective |
+| haiku | minimax-m2.1:cloud | Fast, most cost-effective |
+
+### GLM / Z.AI (Cloud)
+
+Use GLM models via the Z.AI Anthropic-compatible API. Requires a Z.AI account.
+
+```bash
+export ANTHROPIC_AUTH_TOKEN=<your_zai_api_key>
+export ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic
+export API_TIMEOUT_MS=3000000
+# Default server mapping: opus → GLM-4.7, sonnet → GLM-4.7, haiku → GLM-4.5-Air
+# For GLM-5 (Max subscribers):
+# export ANTHROPIC_DEFAULT_OPUS_MODEL=glm-5
+```
+
+| Tier | Default Model | Notes |
+|------|--------------|-------|
+| opus | GLM-4.7 | Server default (or GLM-5 for Max) |
+| sonnet | GLM-4.7 | Same as opus by default |
+| haiku | GLM-4.5-Air | Lighter model |
+
+### Provider Capability Matrix
+
+| Feature | Anthropic | Ollama Local | Ollama Cloud | GLM/Z.AI |
+|---------|-----------|-------------|-------------|----------|
+| Tool calling | Full | Full | Full | Full |
+| Streaming | Yes | Yes | Yes | Yes |
+| Extended thinking | Full | Basic | Basic | TBD |
+| Vision | Yes | Base64 only | Base64 only | TBD |
+| Prompt caching | Yes | No | No | TBD |
+| Token accuracy | Exact | Approximate | Approximate | Approximate |
+
+### Provider Best Practices
+
+- **Start with Anthropic** for initial testing — it's the reference implementation
+- **Try Ollama cloud first** before local — no GPU required, immediate setup
+- **Test with `/bmad-team-verify` first** — single-agent workflow that validates provider compatibility
+- **Don't map all tiers to the same model** — when opus=sonnet=haiku, there's no quality differentiation between leads and workers
+- **Watch for tool calling failures** — the most common issue with alternative providers
 
 ## Quality Gate Hooks
 
@@ -437,6 +538,7 @@ On WSL with NTFS mounts, file creation can occasionally fail silently. If hooks 
 | `.claude/commands/bmad-team-verify.md` | Slash command entry point (dependency verification) |
 | `.claude/hooks/scripts/bmad_teammate_idle.py` | TeammateIdle quality gate |
 | `.claude/hooks/scripts/bmad_task_completed.py` | TaskCompleted quality gate |
+| `docs/how-to/use-agent-teams.md` | User-facing how-to guide |
 
 ## Community References
 

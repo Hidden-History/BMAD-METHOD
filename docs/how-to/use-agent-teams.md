@@ -156,22 +156,24 @@ Edit `.bmad/agent-teams.yaml` to customize team compositions. See `.bmad/README-
 | Setting | Default | Purpose |
 | ------- | ------- | ------- |
 | `max_teammates` | 5 | Hard cap on concurrent agents |
-| `default_model` | sonnet | Model for worker agents |
-| `lead_model` | opus | Model for lead/reviewer agents |
+| `default_model` | sonnet | Model for worker agents (valid: opus, sonnet, haiku) |
+| `lead_model` | opus | Model for lead/reviewer agents (valid: opus, sonnet, haiku) |
 | `require_spawn_approval` | true | Require your approval before spawning |
 
 ## Model Selection
 
 | Model | Best For |
 | ----- | -------- |
-| Sonnet | Worker teammates (devs, story creators, researchers, QA) |
 | Opus | Lead agents and code reviewers |
+| Sonnet | Worker teammates (devs, story creators, QA) |
+| Haiku | Research workers, simple story-prep tasks |
 
 **Tips for managing scope:**
 
 - Start with `sprint-dev` (3 teammates) before trying larger teams
-- Use Sonnet for development work, Opus only for review and orchestration
+- Use Haiku for research stage workers, Sonnet for dev/QA work, Opus for review and orchestration
 - Monitor the lead's progress updates for early scope signals
+- See `.bmad/README-agent-teams.md` for alternative provider setup (Ollama, GLM)
 
 ### Research
 
@@ -201,3 +203,37 @@ The `story-prep` stage requires sprint-status.yaml to track which backlog items 
 
 **Teammate stuck or not responding**
 Check the tmux pane directly. If a teammate is stuck on a permission prompt, set the teammate `mode` to `dontAsk` in the skill spawn parameters. The `bypassPermissions` mode is stronger but bypasses all safety checks.
+
+## Using Alternative Providers
+
+BMAD Agent Teams works with any Anthropic-compatible API. The model tiers ("opus", "sonnet", "haiku") in your config map to actual models via Claude Code environment variables.
+
+### Quick Setup
+
+Set these environment variables before starting Claude Code:
+
+**Ollama (local models)**:
+```bash
+export ANTHROPIC_AUTH_TOKEN=ollama
+export ANTHROPIC_API_KEY=""
+export ANTHROPIC_BASE_URL=http://localhost:11434
+export ANTHROPIC_DEFAULT_OPUS_MODEL=qwen3-coder
+export ANTHROPIC_DEFAULT_SONNET_MODEL=qwen3-coder
+export ANTHROPIC_DEFAULT_HAIKU_MODEL=gpt-oss:20b
+```
+
+**Ollama (cloud models, no GPU)**:
+```bash
+export ANTHROPIC_BASE_URL=https://ollama.com/api
+export ANTHROPIC_AUTH_TOKEN=<your_ollama_api_key>
+# claude --model glm-5:cloud
+```
+
+**GLM / Z.AI**:
+```bash
+export ANTHROPIC_AUTH_TOKEN=<your_zai_api_key>
+export ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic
+export API_TIMEOUT_MS=3000000
+```
+
+All teammates share the same provider within a session. See `.bmad/README-agent-teams.md` for full provider documentation, model recommendations, and capability matrix.

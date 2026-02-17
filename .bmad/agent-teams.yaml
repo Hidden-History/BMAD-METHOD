@@ -13,8 +13,8 @@
 
 global:
   max_teammates: 5              # Hard cap per team (aligns with #1613)
-  default_model: "sonnet"       # Cost-effective default for workers (used when stage omits model field)
-  lead_model: "opus"            # Leads get more capable model (used when stage omits model field)
+  default_model: "sonnet"       # Default for workers. Valid: "opus", "sonnet", "haiku"
+  lead_model: "opus"            # Default for leads. Valid: "opus", "sonnet", "haiku"
   idle_timeout_minutes: 30      # Advisory — lead checks on stuck teammates
   require_spawn_approval: true  # User must approve team composition (HITL)
   require_merge_approval: true  # User approves before merging results

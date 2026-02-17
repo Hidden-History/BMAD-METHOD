@@ -20,6 +20,7 @@ Before using this skill:
 3. BMAD must be installed with agents available as slash commands
 4. `.bmad/agent-teams.yaml` must exist with stage configurations
 5. `_bmad/_config/agent-manifest.csv` must contain agent definitions
+6. **Alternative providers** (optional): If using Ollama or GLM instead of Anthropic, set `ANTHROPIC_BASE_URL` and model mapping env vars before starting Claude Code. See `.bmad/README-agent-teams.md` for provider setup.
 
 ## Orchestration Flow
 
