@@ -46,7 +46,7 @@ Check the active Claude Code environment to identify the model provider:
 1. Read the `ANTHROPIC_BASE_URL` environment variable (run `echo $ANTHROPIC_BASE_URL` via the Bash tool):
    - Not set or `api.anthropic.com` → **Anthropic** (default)
    - Contains `localhost:11434` → **Ollama Local** (local GPU models)
-   - Contains `ollama.com/api` → **Ollama Cloud** (cloud-hosted models, no local GPU)
+   - Contains `ollama.com` (but NOT `localhost`) → **Ollama Cloud** (cloud-hosted models, no local GPU)
    - Contains `api.z.ai` → **GLM/Z.AI**
    - Anything else → **Custom Anthropic-compatible API**
 

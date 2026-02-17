@@ -302,11 +302,13 @@ export ANTHROPIC_DEFAULT_HAIKU_MODEL=gpt-oss:20b
 Use cloud models through Ollama's cloud API without requiring local GPU hardware. Requires an Ollama account with API access.
 
 ```bash
-export ANTHROPIC_BASE_URL=https://ollama.com/api
+export ANTHROPIC_BASE_URL=https://ollama.com
 export ANTHROPIC_AUTH_TOKEN=<your_ollama_api_key>
 # Example: launch with a specific cloud model
 # claude --model glm-5:cloud
 ```
+
+**URL note:** Verified via SDK spike test (2026-02-17). Use `https://ollama.com` — NOT `https://ollama.com/api` or `localhost:11434`.
 
 | Tier | Model | Notes |
 |------|-------|-------|

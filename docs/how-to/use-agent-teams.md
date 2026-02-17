@@ -224,7 +224,7 @@ export ANTHROPIC_DEFAULT_HAIKU_MODEL=gpt-oss:20b
 
 **Ollama (cloud models, no GPU)**:
 ```bash
-export ANTHROPIC_BASE_URL=https://ollama.com/api
+export ANTHROPIC_BASE_URL=https://ollama.com
 export ANTHROPIC_AUTH_TOKEN=<your_ollama_api_key>
 # claude --model glm-5:cloud
 ```
